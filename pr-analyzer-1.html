@@ -852,19 +852,31 @@ function setTickerAndSearch(t) {
 // key-stats: payoutRatio, priceToSalesTrailing12Months
 
 async function fetchYahooData(ticker) {
-  // Use Yahoo Finance v8 API (public, no key needed, CORS-friendly via proxy)
-  const PROXY = 'https://query1.finance.yahoo.com/v8/finance/chart/';
-  const V10   = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/';
+  // Yahoo Finance quoteSummary API via CORS proxy (no API key, no credit needed)
   const modules = 'summaryDetail,defaultKeyStatistics,financialData,incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory';
-  const url = `${V10}${encodeURIComponent(ticker)}?modules=${modules}&corsDomain=finance.yahoo.com`;
+  const yahooUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=${modules}`;
 
-  const resp = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-  });
-  if (!resp.ok) throw new Error(`Yahoo Finance HTTP ${resp.status}`);
-  const json = await resp.json();
+  // Try direct first (works on GitHub Pages / HTTPS), fallback to CORS proxy
+  let json = null;
+  const attempts = [
+    yahooUrl,
+    `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`
+  ];
+
+  for (const url of attempts) {
+    try {
+      const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!resp.ok) continue;
+      const raw = await resp.json();
+      // allorigins wraps in {contents: "..."}
+      json = raw?.contents ? JSON.parse(raw.contents) : raw;
+      if (json?.quoteSummary?.result?.[0]) break;
+    } catch(e) { continue; }
+  }
+
   const result = json?.quoteSummary?.result?.[0];
-  if (!result) throw new Error('Yahoo Finance: no data returned');
+  if (!result) throw new Error('无法连接 Yahoo Finance，请尝试上传截图或 PDF');
 
   const sd  = result.summaryDetail        || {};
   const ks  = result.defaultKeyStatistics  || {};
@@ -918,6 +930,7 @@ async function doTickerSearch() {
   showStatus(`正在从 Yahoo Finance 获取 ${ticker} 数据…`, 'loading');
 
   try {
+    // No API key needed — Yahoo Finance is free and public
     const data = await fetchYahooData(ticker);
 
     recognizedData = data;
@@ -941,8 +954,7 @@ async function doTickerSearch() {
     renderRecognizedFields();
 
   } catch(err) {
-    // Yahoo failed — fallback message, no AI web_search (avoids rate limit)
-    showStatus(`Yahoo Finance 获取失败（${err.message}）。请尝试上传截图或 PDF`, 'error');
+    showStatus(`获取失败：${err.message}`, 'error');
   } finally {
     btn.disabled = false; btn.textContent = '搜索';
   }
@@ -1777,7 +1789,7 @@ async function doValiditySearch() {
     showVStatus('v-search-status', `✓ ${data.name} · Yahoo Finance · ${uniqueFilled}/7 项财务数据已填入`, 'success');
 
   } catch(err) {
-    showVStatus('v-search-status', `Yahoo Finance 获取失败：${err.message}`, 'error');
+    showVStatus('v-search-status', `获取失败：${err.message}。请尝试 PDF 上传`, 'error');
   } finally {
     btn.disabled = false; btn.textContent = '搜索';
   }
