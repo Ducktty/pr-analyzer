@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="市赚率 PR">
+<meta name="theme-color" content="#0D1117">
+<meta name="description" content="市赚率 PR · AI 价值投资分析工具">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>市赚率 PR · 价值投资分析</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0D1117; --surface: #161B22; --surface2: #1C2333;
+    --border: #30363D; --green: #00D395; --gold: #F0B429;
+    --red: #FF6B6B; --blue: #58A6FF; --purple: #BC8CFF;
+    --text: #E6EDF3; --muted: #7D8590;
+    --font: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; padding: 0 0 80px; }
+
+  header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--green), #00a870); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 13px; color: #0D1117; flex-shrink: 0; }
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  header p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  main { max-width: 540px; margin: 0 auto; padding: 20px 14px 0; }
+
+  /* ── TABS ── */
+  .tab-row { display: flex; gap: 0; margin-bottom: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+  .tab-btn { flex: 1; padding: 8px 4px; border-radius: 7px; border: none; background: transparent; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all .18s; font-family: var(--font); display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+  .tab-btn.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+  /* ── CARD ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 16px; margin-bottom: 13px; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 11px; }
+
+  /* ── INPUT SOURCE SWITCHER (inside upload tab) ── */
+  .source-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .source-btn { flex: 1; padding: 9px 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all .18s; font-family: var(--font); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .source-btn .s-icon { font-size: 18px; }
+  .source-btn.active { background: var(--surface2); border-color: var(--green); color: var(--green); }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone { border: 2px dashed var(--border); border-radius: 11px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all .18s; position: relative; background: var(--bg); }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--green); background: #00D39506; }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .upload-sub { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .upload-preview { position: relative; }
+  .upload-preview img { width: 100%; border-radius: 8px; max-height: 200px; object-fit: cover; }
+  .remove-img { position: absolute; top: 7px; right: 7px; background: rgba(0,0,0,.75); border: none; color: #fff; border-radius: 5px; padding: 3px 8px; font-size: 11px; cursor: pointer; }
+  .pdf-preview-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; position: relative; }
+  .pdf-icon { font-size: 24px; flex-shrink: 0; }
+  .pdf-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pdf-size { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── TICKER SEARCH ── */
+  .ticker-search-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .ticker-input-row { display: flex; gap: 8px; }
+  .ticker-input-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; color: var(--text); font-family: var(--mono); font-size: 16px; font-weight: 700; outline: none; transition: border-color .2s; letter-spacing: 1px; text-transform: uppercase; }
+  .ticker-input-row input:focus { border-color: var(--green); }
+  .ticker-input-row input::placeholder { color: var(--border); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 13px; }
+  .search-btn { padding: 11px 16px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity .2s; }
+  .search-btn:hover { opacity: .85; }
+  .search-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .ticker-hint { font-size: 11px; color: var(--muted); }
+  .ticker-examples { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ticker-ex { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; font-size: 11px; font-family: var(--mono); color: var(--muted); cursor: pointer; transition: all .15s; }
+  .ticker-ex:hover { color: var(--green); border-color: var(--green); }
+
+  /* ── STATUS BAR ── */
+  .status-bar { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border-radius: 7px; margin: 10px 0; font-size: 12px; }
+  .status-bar.loading { background: #00D39510; border: 1px solid #00D39530; color: var(--green); }
+  .status-bar.warning { background: #F0B42910; border: 1px solid #F0B42930; color: var(--gold); }
+  .status-bar.error { background: #FF6B6B10; border: 1px solid #FF6B6B30; color: var(--red); }
+  .status-bar.success { background: #00D39510; border: 1px solid #00D39530; color: var(--green); }
+  .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; opacity: .6; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RECOGNIZED FIELDS ── */
+  .recog-header { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 10px; }
+  .recog-header span { font-size: 12px; color: var(--muted); }
+  .recognized-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field-item { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 9px 11px; }
+  .field-item.missing-core { border-color: #F0B42960; background: #F0B42906; }
+  .field-item.confirmed { border-color: #00D39540; }
+  .field-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 3px; display: flex; align-items: center; gap: 4px; }
+  .field-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .field-item.missing-core .field-dot { background: var(--gold); }
+  .field-item.confirmed .field-dot { background: var(--green); }
+  .field-value { font-family: var(--mono); font-size: 15px; font-weight: 600; }
+  .field-input { background: transparent; border: none; outline: none; font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--text); width: 100%; }
+  .field-input::placeholder { color: var(--border); font-weight: 400; font-size: 13px; }
+
+  /* ── MANUAL ── */
+  .mode-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+  .mode-btn { flex: 1; padding: 7px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all .18s; font-family: var(--font); }
+  .mode-btn.active { background: var(--surface2); border-color: var(--green); color: var(--green); }
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .input-group { display: flex; flex-direction: column; gap: 4px; }
+  .input-group label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; display: flex; align-items: center; gap: 4px; }
+  .input-group label .tag { font-size: 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; letter-spacing: 0; text-transform: none; }
+  .input-group input { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 9px 10px; color: var(--text); font-family: var(--mono); font-size: 15px; font-weight: 600; outline: none; transition: border-color .2s; width: 100%; }
+  .input-group input:focus { border-color: var(--green); }
+  .input-group input::placeholder { color: var(--border); font-weight: 400; font-size: 13px; }
+  .input-hint { font-size: 10px; color: var(--muted); }
+
+  /* ── ANALYZE BTN ── */
+  .analyze-btn { width: 100%; padding: 12px; background: var(--green); color: #0D1117; border: none; border-radius: 9px; font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .18s, transform .1s; margin-top: 11px; }
+  .analyze-btn:hover { opacity: .88; }
+  .analyze-btn:active { transform: scale(.98); }
+
+  /* ── RESULT ── */
+  #result { display: none; }
+
+  /* ── PR GAUGE ── */
+  .pr-gauge-wrap { display: flex; flex-direction: column; align-items: center; padding: 24px 16px 14px; }
+  .pr-label-top { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  .pr-value { font-family: var(--mono); font-size: 58px; font-weight: 600; letter-spacing: -3px; line-height: 1; transition: color .4s; }
+  .pr-source-badge { font-size: 10px; color: var(--muted); margin-top: 5px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; }
+  .pr-ticker-name { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .pr-grade { font-size: 13px; font-weight: 600; margin-top: 8px; padding: 4px 14px; border-radius: 20px; }
+  .spectrum-wrap { margin: 13px 0 2px; }
+  .spectrum-bar { height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--green) 0%, #a8e063 25%, var(--gold) 55%, #ff9f43 75%, var(--red) 100%); position: relative; }
+  .spectrum-pointer { position: absolute; top: -5px; width: 15px; height: 15px; background: #fff; border-radius: 50%; border: 2px solid var(--bg); box-shadow: 0 0 0 2px currentColor; transform: translateX(-50%); transition: left .6s cubic-bezier(.4,0,.2,1); }
+  .spectrum-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+  .spectrum-labels span { font-size: 10px; color: var(--muted); }
+
+  /* ── DATA ROWS ── */
+  .data-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .data-row:last-child { border-bottom: none; }
+  .data-row .key { font-size: 12px; color: var(--muted); }
+  .data-row .val { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .formula-box { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 10px 13px; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 11px; line-height: 1.9; }
+  .formula-box .hl { color: var(--green); }
+
+  /* ── HISTORY ── */
+  .history-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-top: 4px; }
+  .history-item { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 9px 11px; }
+  .history-item .h-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+  .history-item .h-val { font-family: var(--mono); font-size: 17px; font-weight: 600; }
+  .history-item .h-note { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .history-bar-row { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+  .history-bar-row .h-bar-label { font-size: 10px; color: var(--muted); width: 52px; flex-shrink: 0; }
+  .history-bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; }
+  .history-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+  .history-bar-num { font-family: var(--mono); font-size: 11px; font-weight: 600; width: 34px; text-align: right; flex-shrink: 0; }
+
+  /* ── SENSITIVITY ── */
+  .sensitivity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .sens-item { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 9px; text-align: center; }
+  .sens-item .s-label { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+  .sens-item .s-val { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+
+  /* ── AI REPORT ── */
+  .ai-header { display: flex; align-items: center; gap: 7px; margin-bottom: 13px; }
+  .ai-badge { font-size: 9px; font-weight: 700; letter-spacing: .06em; background: linear-gradient(90deg,#58A6FF22,#00D39522); border: 1px solid #58A6FF44; color: var(--blue); border-radius: 3px; padding: 2px 6px; }
+  .report-block { margin-bottom: 14px; }
+  .report-block-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 7px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+  .report-text { font-size: 13px; line-height: 1.75; color: #B8C7D8; }
+
+  /* ── LOADING ── */
+  .loading-dots span { animation: blink 1.4s infinite; font-size: 16px; color: var(--green); }
+  .loading-dots span:nth-child(2) { animation-delay: .2s; }
+  .loading-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+  /* ── HISTORY LOG ── */
+  .log-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .log-item:last-child { border-bottom: none; }
+  .log-item .log-time { font-size: 10px; color: var(--muted); }
+  .log-item .log-ticker { font-size: 13px; font-weight: 600; }
+  .log-item .log-pr { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .log-item .log-grade { font-size: 10px; padding: 2px 6px; border-radius: 9px; font-weight: 600; }
+  .log-source { font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; margin-left: 5px; }
+  .empty-log { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+
+  footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--border); line-height: 1.7; }
+
+  @media (max-width: 380px) {
+    .pr-value { font-size: 48px; }
+    .input-grid, .recognized-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── PDF SUPPORT NOTE ── */
+  .pdf-support-note { margin-top: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+  .pdf-support-title { font-size: 10px; font-weight: 700; color: var(--green); letter-spacing: .05em; margin-bottom: 7px; }
+  .pdf-source-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+  .pdf-src-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); background: var(--surface2); }
+  .pdf-src-tag.wsj { border-color: #58A6FF44; color: var(--blue); background: #58A6FF10; }
+  .pdf-tip { font-size: 11px; color: var(--muted); }
+  .pdf-tip kbd { background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; font-size: 10px; font-family: var(--mono); }
+
+
+  /* ── API KEY BANNER ── */
+  .apikey-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 14px 16px; margin-bottom: 14px; }
+  .apikey-banner.has-key { border-color: #00D39540; background: #00D39506; }
+  .apikey-row { display: flex; align-items: center; gap: 8px; }
+  .apikey-icon { font-size: 18px; flex-shrink: 0; }
+  .apikey-text h3 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .apikey-text p { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .apikey-text a { color: var(--blue); text-decoration: none; }
+  .apikey-input-row { display: flex; gap: 7px; margin-top: 10px; }
+  .apikey-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 9px 11px; color: var(--text); font-family: var(--mono); font-size: 12px; outline: none; transition: border-color .2s; letter-spacing: .5px; }
+  .apikey-input:focus { border-color: var(--green); }
+  .apikey-input::placeholder { color: var(--border); font-family: var(--font); letter-spacing: 0; font-size: 12px; }
+  .apikey-save-btn { padding: 9px 14px; background: var(--green); color: #0D1117; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: opacity .15s; }
+  .apikey-save-btn:hover { opacity: .85; }
+  .apikey-status { font-size: 11px; margin-top: 7px; padding: 6px 10px; border-radius: 6px; }
+  .apikey-status.ok { background: #00D39512; color: var(--green); border: 1px solid #00D39530; }
+  .apikey-status.err { background: #FF6B6B10; color: var(--red); border: 1px solid #FF6B6B30; }
+  .apikey-toggle { font-size: 11px; color: var(--muted); cursor: pointer; text-decoration: underline; margin-top: 5px; display: inline-block; }
+
+
+  /* ── VALIDITY CHECKER ── */
+  .validity-card { margin-bottom: 14px; }
+  .validity-overall { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; margin-bottom: 14px; }
+  .validity-overall.pass { background: #00D39512; border: 1px solid #00D39540; }
+  .validity-overall.warn { background: #FF6B6B12; border: 1px solid #FF6B6B40; }
+  .validity-overall.partial { background: #F0B42912; border: 1px solid #F0B42940; }
+  .validity-overall-icon { font-size: 22px; flex-shrink: 0; }
+  .validity-overall-text h4 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .validity-overall-text p { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .validity-items { display: flex; flex-direction: column; gap: 8px; }
+  .validity-item { border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+  .validity-item-header { display: flex; align-items: center; gap: 9px; padding: 10px 12px; cursor: pointer; }
+  .validity-item-header:active { opacity: .8; }
+  .v-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .v-status-dot.pass { background: var(--green); }
+  .v-status-dot.fail { background: var(--red); }
+  .v-status-dot.unknown { background: var(--muted); }
+  .v-status-dot.warn { background: var(--gold); }
+  .v-item-title { flex: 1; font-size: 12px; font-weight: 600; }
+  .v-item-badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 700; white-space: nowrap; }
+  .v-item-badge.pass { background: #00D39518; color: var(--green); }
+  .v-item-badge.fail { background: #FF6B6B18; color: var(--red); }
+  .v-item-badge.unknown { background: var(--surface2); color: var(--muted); }
+  .v-item-badge.warn { background: #F0B42918; color: var(--gold); }
+  .v-item-body { padding: 0 12px 11px; border-top: 1px solid var(--border); background: var(--bg); }
+  .v-item-body.hidden { display: none; }
+  .v-desc { display: none; } /* moved to modal */
+  /* INFO MODAL */
+  .v-info-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--muted); background: transparent; color: var(--muted); font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; font-family: var(--font); transition: all .15s; }
+  .v-info-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .info-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(3px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .15s ease; }
+  .info-modal-overlay.hidden { display: none; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .info-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 340px; width: 100%; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .info-modal-close { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .info-modal-close:hover { color: var(--text); border-color: var(--text); }
+  .info-modal-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; padding-right: 30px; line-height: 1.4; }
+  .info-modal-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .info-modal-red { margin-top: 12px; font-size: 11px; font-weight: 700; color: var(--gold); background: #F0B42910; border: 1px solid #F0B42930; border-radius: 6px; padding: 7px 10px; }
+  .v-input-row { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .v-input-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .03em; }
+  .v-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-family: var(--mono); font-size: 14px; font-weight: 600; outline: none; box-sizing: border-box; }
+  .v-input:focus { border-color: var(--blue); }
+  .v-input::placeholder { color: var(--border); font-family: var(--font); font-size: 11px; font-weight: 400; }
+  .v-recalc-btn { padding: 7px 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: var(--font); }
+  .v-recalc-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .v-result-line { font-size: 12px; font-weight: 600; margin-top: 7px; padding: 5px 9px; border-radius: 5px; }
+  .v-result-line.pass { background: #00D39512; color: var(--green); }
+  .v-result-line.fail { background: #FF6B6B12; color: var(--red); }
+  .v-result-line.warn { background: #F0B42912; color: var(--gold); }
+  .v-unknown-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 6px; }
+  .v-chevron { font-size: 10px; color: var(--muted); transition: transform .2s; }
+  .v-chevron.open { transform: rotate(180deg); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <img src="data:image/png;base64,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" style="width:38px;height:38px;border-radius:10px;object-fit:cover;flex-shrink:0" alt="PR">
+  <div>
+    <h1>市赚率分析器</h1>
+    <p>Price-to-Earnings-on-ROE · AI 价值投资助手</p>
+  </div>
+</header>
+
+<main>
+
+<!-- API KEY BANNER -->
+<div id="apikey-banner" class="apikey-banner">
+  <div class="apikey-row">
+    <div class="apikey-icon">🔑</div>
+    <div class="apikey-text">
+      <h3>需要 Anthropic API Key</h3>
+      <p>本地运行需要填入 API Key 才能使用 AI 识别功能。<br>
+      免费获取：<a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>（新用户有免费额度）</p>
+    </div>
+  </div>
+  <div class="apikey-input-row">
+    <input class="apikey-input" type="password" id="apikey-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button class="apikey-save-btn" onclick="saveApiKey()">保存</button>
+  </div>
+  <span class="apikey-toggle" onclick="toggleKeyVis()">👁 显示/隐藏</span>
+  <div id="apikey-status" style="display:none"></div>
+</div>
+
+
+<!-- MAIN TABS -->
+<div class="tab-row">
+  <button class="tab-btn active" id="tab-smart" onclick="switchTab('smart')">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    智能读取
+  </button>
+  <button class="tab-btn" id="tab-manual" onclick="switchTab('manual')">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    手动输入
+  </button>
+  <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    历史记录
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SMART TAB  (截图 / PDF / 代码搜索)
+═══════════════════════════════════════════ -->
+<div id="tab-smart-panel">
+  <div class="card">
+
+    <!-- Source picker -->
+    <div class="source-row">
+      <button class="source-btn active" id="src-screenshot" onclick="switchSource('screenshot')">
+        <span class="s-icon">🖼️</span>截图
+      </button>
+      <button class="source-btn" id="src-pdf" onclick="switchSource('pdf')">
+        <span class="s-icon">📄</span>PDF
+      </button>
+      <button class="source-btn" id="src-ticker" onclick="switchSource('ticker')">
+        <span class="s-icon">🔍</span>代码搜索
+      </button>
+    </div>
+
+    <!-- ── SCREENSHOT PANEL ── -->
+    <div id="source-screenshot-panel">
+      <div class="upload-zone" id="img-upload-zone"
+           ondragover="dragOver(event,'img-upload-zone')"
+           ondragleave="dragLeave(event,'img-upload-zone')"
+           ondrop="dropFile(event,'image')">
+        <input type="file" accept="image/*" id="img-file-input" onchange="handleFile(event,'image')">
+        <div id="img-placeholder">
+          <div class="upload-icon">📊</div>
+          <div class="upload-title">点击或拖拽截图</div>
+          <div class="upload-sub">Moomoo · 富途 · 雪球 · TradingView<br>AI 自动识别 PE · PB · ROE · 股利支付率</div>
+        </div>
+        <div id="img-preview-wrap" class="upload-preview" style="display:none">
+          <img id="img-preview" src="" alt="">
+          <button class="remove-img" onclick="resetSource('screenshot',event)">✕ 重新选择</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PDF PANEL ── -->
+    <div id="source-pdf-panel" style="display:none">
+      <div class="upload-zone" id="pdf-upload-zone"
+           ondragover="dragOver(event,'pdf-upload-zone')"
+           ondragleave="dragLeave(event,'pdf-upload-zone')"
+           ondrop="dropFile(event,'pdf')">
+        <input type="file" accept="application/pdf" id="pdf-file-input" onchange="handleFile(event,'pdf')">
+        <div id="pdf-placeholder">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">点击或拖拽 PDF 财报</div>
+          <div class="upload-sub">AI 自动提取 PE · ROE · PB · EPS · 利润率等全部数据</div>
+        </div>
+        <div id="pdf-preview-wrap" style="display:none">
+          <div class="pdf-preview-box">
+            <span class="pdf-icon">📄</span>
+            <div style="flex:1;min-width:0">
+              <div class="pdf-name" id="pdf-filename">—</div>
+              <div class="pdf-size" id="pdf-filesize">—</div>
+            </div>
+            <button class="remove-img" style="position:static" onclick="resetSource('pdf',event)">✕</button>
+          </div>
+        </div>
+      </div>
+      <div class="pdf-support-note">
+        <div class="pdf-support-title">✓ 已验证支持的 PDF 来源</div>
+        <div class="pdf-source-tags">
+          <span class="pdf-src-tag wsj">WSJ</span>
+          <span class="pdf-src-tag">Morningstar</span>
+          <span class="pdf-src-tag">Macrotrends</span>
+          <span class="pdf-src-tag">富途牛牛</span>
+          <span class="pdf-src-tag">雪球财报</span>
+          <span class="pdf-src-tag">Moomoo</span>
+        </div>
+        <div class="pdf-tip">💡 任意财报页面按 <kbd>Ctrl+P</kbd> → 另存为 PDF 即可上传</div>
+      </div>
+    </div>
+
+    <!-- ── TICKER SEARCH PANEL ── -->
+    <div id="source-ticker-panel" style="display:none">
+      <div class="ticker-search-wrap">
+        <div class="ticker-input-row">
+          <input type="text" id="ticker-search-input" placeholder="输入股票代码，如 NVDA / AAPL / 2330.TW" maxlength="20" onkeydown="if(event.key==='Enter')doTickerSearch()">
+          <button class="search-btn" id="ticker-search-btn" onclick="doTickerSearch()">搜索</button>
+        </div>
+        <div class="ticker-hint">
+          <div style="margin-bottom:6px">常用示例：</div>
+          <div class="ticker-examples">
+            <span class="ticker-ex" onclick="setTickerAndSearch('NVDA')">NVDA</span>
+            <span class="ticker-ex" onclick="setTickerAndSearch('AAPL')">AAPL</span>
+            <span class="ticker-ex" onclick="setTickerAndSearch('TSLA')">TSLA</span>
+            <span class="ticker-ex" onclick="setTickerAndSearch('MSFT')">MSFT</span>
+            <span class="ticker-ex" onclick="setTickerAndSearch('2330.TW')">2330.TW 台积电</span>
+            <span class="ticker-ex" onclick="setTickerAndSearch('00700.HK')">00700.HK 腾讯</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESSING STATUS -->
+    <div id="smart-status" style="display:none"></div>
+
+    <!-- RECOGNIZED FIELDS -->
+    <div id="recognized-section" style="display:none">
+      <div class="recog-header">
+        <span id="recog-summary"></span>
+        <span id="recog-source-tag" style="font-size:10px;color:var(--blue)"></span>
+      </div>
+      <div class="recognized-grid" id="fields-grid"></div>
+      <div id="missing-warning" style="display:none; margin-top:10px; padding:9px 12px; background:#F0B42910; border:1px solid #F0B42930; border-radius:7px; font-size:12px; color:var(--gold);">
+        ⚠️ 请补充标黄字段后继续，无需重新上传
+      </div>
+      <button class="analyze-btn" onclick="analyzeFromRecognized()">生成分析报告 →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MANUAL TAB
+═══════════════════════════════════════════ -->
+<div id="tab-manual-panel" style="display:none">
+  <div class="card">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-pe" onclick="switchMode('pe')">PE 模式（通用）</button>
+      <button class="mode-btn" id="btn-pb" onclick="switchMode('pb')">PB 模式（银行/周期）</button>
+    </div>
+    <div id="pe-inputs">
+      <div class="input-grid">
+        <div class="input-group"><label>股票名称 <span class="tag">选填</span></label><input type="text" id="ticker" placeholder="AAPL / 台积电"></div>
+        <div class="input-group"><label>PE（市盈率）</label><input type="number" id="pe" placeholder="15.0" step="0.01"></div>
+        <div class="input-group"><label>ROE <span class="tag">%</span></label><input type="number" id="roe" placeholder="25.0" step="0.01"></div>
+        <div class="input-group"><label>股利支付率 <span class="tag">%</span></label><input type="number" id="payout" placeholder="50" step="0.1"><div class="input-hint">留空默认 50%</div></div>
+        <div class="input-group"><label>PB <span class="tag">选填</span></label><input type="number" id="pb-manual" placeholder="2.5" step="0.01"></div>
+        <div class="input-group"><label>EPS <span class="tag">选填</span></label><input type="number" id="eps" placeholder="3.20" step="0.01"></div>
+      </div>
+    </div>
+    <div id="pb-inputs" style="display:none">
+      <div class="input-grid">
+        <div class="input-group"><label>股票名称 <span class="tag">选填</span></label><input type="text" id="ticker-pb" placeholder="00939 / 中信银行"></div>
+        <div class="input-group"><label>PB（市净率）</label><input type="number" id="pb" placeholder="0.85" step="0.01"></div>
+        <div class="input-group"><label>平均 ROE <span class="tag">% 5年</span></label><input type="number" id="roe-pb" placeholder="12.0" step="0.01"></div>
+        <div class="input-group"><label>股利支付率 <span class="tag">%</span></label><input type="number" id="payout-pb" placeholder="50" step="0.1"><div class="input-hint">留空默认 50%</div></div>
+      </div>
+    </div>
+    <button class="analyze-btn" onclick="analyzeManual()">开始分析 →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HISTORY TAB
+═══════════════════════════════════════════ -->
+<div id="tab-history-panel" style="display:none">
+  <div class="card">
+    <div class="section-label">分析历史</div>
+    <div id="history-log-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     RESULT
+═══════════════════════════════════════════ -->
+<div id="result">
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="pr-gauge-wrap">
+      <div class="pr-label-top">市赚率 PR</div>
+      <div class="pr-value" id="pr-display">—</div>
+      <div class="pr-ticker-name" id="pr-ticker"></div>
+      <div class="pr-source-badge" id="pr-source-badge"></div>
+      <div class="pr-grade" id="pr-grade"></div>
+    </div>
+    <div style="padding:0 18px 14px;">
+      <div class="spectrum-wrap">
+        <div class="spectrum-bar">
+          <div class="spectrum-pointer" id="spectrum-ptr" style="left:0%;color:var(--green)"></div>
+        </div>
+        <div class="spectrum-labels">
+          <span>0</span><span>0.4</span><span>0.6</span><span>0.8</span><span>1.0</span><span>1.5+</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label" style="margin-bottom:0">计算明细</div>
+    <div id="data-breakdown"></div>
+    <div class="formula-box" id="formula-box"></div>
+  </div>
+
+  <!-- VALIDITY CHECKER CARD -->
+  <div class="card validity-card" id="validity-card">
+    <div class="ai-header">
+      <div class="section-label" style="margin-bottom:0">市赚率有效性审核</div>
+      <div class="ai-badge" style="border-color:#FF6B6B44;color:#FF6B6B;background:#FF6B6B10">6 项红灯检测</div>
+    </div>
+    <div id="validity-overall" class="validity-overall pass">
+      <div class="validity-overall-icon" id="v-overall-icon">✅</div>
+      <div class="validity-overall-text">
+        <h4 id="v-overall-title">审核中…</h4>
+        <p id="v-overall-desc">正在检测市赚率是否适用于该股票</p>
+      </div>
+    </div>
+    <!-- VALIDITY SOURCE TABS -->
+    <div style="margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:8px">财务数据来源</div>
+      <div class="mode-toggle" style="margin-bottom:10px">
+        <button class="mode-btn active" id="vmode-manual" onclick="switchValidityMode('manual')">✏️ 手动</button>
+        <button class="mode-btn" id="vmode-pdf" onclick="switchValidityMode('pdf')">📄 PDF</button>
+        <button class="mode-btn" id="vmode-search" onclick="switchValidityMode('search')">🔍 代码搜索</button>
+      </div>
+
+      <!-- Manual note -->
+      <div id="vmode-manual-panel" style="font-size:11px;color:var(--muted);padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;line-height:1.6">
+        展开下方各条目，按标注的英文字段名在财报网站查找对应数字填入即可。
+      </div>
+
+      <!-- PDF upload -->
+      <div id="vmode-pdf-panel" style="display:none">
+        <div class="upload-zone" id="v-pdf-zone" style="padding:18px"
+             ondragover="dragOver(event,'v-pdf-zone')" ondragleave="dragLeave(event,'v-pdf-zone')" ondrop="dropFile(event,'vpdf')">
+          <input type="file" accept="application/pdf" id="v-pdf-input" onchange="handleFile(event,'vpdf')">
+          <div id="v-pdf-placeholder">
+            <div style="font-size:22px;margin-bottom:6px">📄</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px">上传财务报表 PDF</div>
+            <div style="font-size:11px;color:var(--muted)">AI 自动提取 Total Assets · Goodwill · Net Income · Operating CF 等</div>
+          </div>
+          <div id="v-pdf-preview" style="display:none">
+            <div class="pdf-preview-box">
+              <span class="pdf-icon">📄</span>
+              <div style="flex:1"><div class="pdf-name" id="v-pdf-name"></div><div class="pdf-size" id="v-pdf-size"></div></div>
+              <button class="remove-img" style="position:static" onclick="resetVPdf(event)">✕</button>
+            </div>
+          </div>
+        </div>
+        <div id="v-pdf-status" style="display:none;margin-top:8px"></div>
+      </div>
+
+      <!-- Code search -->
+      <div id="vmode-search-panel" style="display:none">
+        <div style="display:flex;gap:7px">
+          <input type="text" id="v-search-ticker" placeholder="AAPL / NVDA / 2330.TW"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:14px;font-weight:600;outline:none"
+            onkeydown="if(event.key==='Enter')doValiditySearch()">
+          <button onclick="doValiditySearch()" id="v-search-btn"
+            style="padding:9px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)">搜索</button>
+        </div>
+        <div id="v-search-status" style="display:none;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="validity-items" id="validity-items"></div>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.6;padding:8px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+      💡 <strong style="color:var(--text)">How to use</strong>：More red flags = lower reliability of PR. Tap any item to expand and enter figures from the financial statements.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">历史 PR 对比</div>
+    <div class="history-grid" id="history-grid"></div>
+    <div style="margin-top:12px" id="history-bars"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">敏感性分析 · ROE 变化对 PR 的影响</div>
+    <div class="sensitivity-grid" id="sensitivity-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="ai-header">
+      <div class="section-label" style="margin-bottom:0">AI 分析报告</div>
+      <div class="ai-badge">AI POWERED</div>
+    </div>
+    <div id="ai-report-content">
+      <div class="loading-dots"><span>●</span><span>●</span><span>●</span></div>
+    </div>
+  </div>
+
+  <footer>本工具仅供学习参考，不构成投资建议。<br>市赚率模型基于公开财务数据，请结合其他分析综合判断。</footer>
+</div>
+
+</main>
+
+<script>
+
+// ════════════════════════════════════════════
+//  API KEY MANAGEMENT
+// ════════════════════════════════════════════
+function getApiKey() {
+  return sessionStorage.getItem('pr-apikey') || localStorage.getItem('pr-apikey') || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apikey-input').value.trim();
+  const statusEl = document.getElementById('apikey-status');
+  if (!key) {
+    statusEl.className = 'apikey-status err';
+    statusEl.textContent = '请输入 API Key';
+    statusEl.style.display = '';
+    return;
+  }
+  if (!key.startsWith('sk-ant-')) {
+    statusEl.className = 'apikey-status err';
+    statusEl.textContent = 'Key 格式不对，应以 sk-ant- 开头';
+    statusEl.style.display = '';
+    return;
+  }
+  localStorage.setItem('pr-apikey', key);
+  sessionStorage.setItem('pr-apikey', key);
+  statusEl.className = 'apikey-status ok';
+  statusEl.textContent = '✓ API Key 已保存（本地存储，不会上传）';
+  statusEl.style.display = '';
+  document.getElementById('apikey-banner').classList.add('has-key');
+  // Show masked key
+  document.getElementById('apikey-input').value = key.slice(0,12) + '••••••••••••' + key.slice(-4);
+}
+
+function toggleKeyVis() {
+  const inp = document.getElementById('apikey-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+// On load: restore key if saved
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = getApiKey();
+  if (saved) {
+    document.getElementById('apikey-input').value = saved.slice(0,12) + '••••••••••••' + saved.slice(-4);
+    document.getElementById('apikey-banner').classList.add('has-key');
+    document.getElementById('apikey-status').className = 'apikey-status ok';
+    document.getElementById('apikey-status').textContent = '✓ 已有保存的 API Key';
+    document.getElementById('apikey-status').style.display = '';
+  }
+});
+
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let currentTab = 'smart';
+let currentSource = 'screenshot';
+let currentMode = 'pe';
+let recognizedData = {};
+let lastDataSource = '手动';
+let prHistory = [];
+try { prHistory = JSON.parse(localStorage.getItem('pr-history') || '[]'); } catch(e) {}
+
+// ════════════════════════════════════════════
+//  TAB / MODE / SOURCE SWITCHING
+// ════════════════════════════════════════════
+function switchTab(tab) {
+  ['smart','manual','history'].forEach(t => {
+    document.getElementById('tab-'+t+'-panel').style.display = t===tab?'':'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  currentTab = tab;
+  if (tab === 'history') renderHistoryLog();
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('pe-inputs').style.display = mode==='pe'?'':'none';
+  document.getElementById('pb-inputs').style.display = mode==='pb'?'':'none';
+  document.getElementById('btn-pe').classList.toggle('active', mode==='pe');
+  document.getElementById('btn-pb').classList.toggle('active', mode==='pb');
+}
+
+function switchSource(src) {
+  ['screenshot','pdf','ticker'].forEach(s => {
+    document.getElementById('source-'+s+'-panel').style.display = s===src?'':'none';
+    document.getElementById('src-'+s).classList.toggle('active', s===src);
+  });
+  currentSource = src;
+  document.getElementById('smart-status').style.display = 'none';
+  document.getElementById('recognized-section').style.display = 'none';
+}
+
+// ════════════════════════════════════════════
+//  DRAG & DROP
+// ════════════════════════════════════════════
+function dragOver(e, zoneId) { e.preventDefault(); document.getElementById(zoneId).classList.add('drag-over'); }
+function dragLeave(e, zoneId) { document.getElementById(zoneId).classList.remove('drag-over'); }
+function dropFile(e, type) {
+  e.preventDefault();
+  dragLeave(e, type==='image'?'img-upload-zone':'pdf-upload-zone');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  if (type==='image' && file.type.startsWith('image/')) processFile(file, 'image');
+  else if (type==='pdf' && file.type==='application/pdf') processFile(file, 'pdf');
+}
+function handleFile(e, type) {
+  const file = e.target.files[0];
+  if (file) processFile(file, type);
+}
+
+// ════════════════════════════════════════════
+//  FILE PROCESSING ENTRY
+// ════════════════════════════════════════════
+function processFile(file, type) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (type === 'image') {
+      document.getElementById('img-preview').src = e.target.result;
+      document.getElementById('img-placeholder').style.display = 'none';
+      document.getElementById('img-preview-wrap').style.display = '';
+      recognizeWithAI(e.target.result, null, 'image');
+    } else {
+      // PDF
+      document.getElementById('pdf-filename').textContent = file.name;
+      document.getElementById('pdf-filesize').textContent = (file.size/1024).toFixed(0) + ' KB · PDF 财报';
+      document.getElementById('pdf-placeholder').style.display = 'none';
+      document.getElementById('pdf-preview-wrap').style.display = '';
+      recognizeWithAI(null, e.target.result, 'pdf');
+    }
+    document.getElementById('recognized-section').style.display = 'none';
+    document.getElementById('result').style.display = 'none';
+  };
+  if (type === 'image') reader.readAsDataURL(file);
+  else reader.readAsDataURL(file); // PDF also as base64 for Claude API
+}
+
+function resetSource(src, e) {
+  if (e) e.stopPropagation();
+  if (src === 'screenshot') {
+    document.getElementById('img-placeholder').style.display = '';
+    document.getElementById('img-preview-wrap').style.display = 'none';
+    document.getElementById('img-file-input').value = '';
+  } else {
+    document.getElementById('pdf-placeholder').style.display = '';
+    document.getElementById('pdf-preview-wrap').style.display = 'none';
+    document.getElementById('pdf-file-input').value = '';
+  }
+  document.getElementById('smart-status').style.display = 'none';
+  document.getElementById('recognized-section').style.display = 'none';
+  recognizedData = {};
+}
+
+// ════════════════════════════════════════════
+//  AI RECOGNITION — IMAGE OR PDF
+// ════════════════════════════════════════════
+function showStatus(msg, type='loading') {
+  const el = document.getElementById('smart-status');
+  el.style.display = 'flex';
+  el.className = 'status-bar ' + type;
+  el.innerHTML = type==='loading' ? `<div class="spin"></div><span>${msg}</span>` : `<span>${msg}</span>`;
+}
+
+async function recognizeWithAI(imageDataUrl, pdfDataUrl, fileType) {
+  showStatus(fileType==='pdf' ? 'AI 正在解析 PDF 财报数据…' : 'AI 正在识别截图数据…');
+  document.getElementById('recognized-section').style.display = 'none';
+
+  const prompt = `你是一个专业的股票财务数据提取 AI。请仔细分析这份${fileType==='pdf'?'PDF 财务报表':'股票截图'}（可能来自 WSJ、Morningstar、Moomoo、富途、雪球、TradingView 等平台）。
+
+请提取以下所有能找到的字段：
+- ticker: 股票代码或公司名称
+- pe: PE 市盈率（P/E Ratio TTM，只填数字）
+- pb: PB 市净率（P/B 或 Price to Book，只填数字）
+- roe: ROE 净资产回报率（Return on Equity，% 只填数字，例如 25.3）
+- payout: 股利支付率（Dividend Payout Ratio，%，只填数字）
+- eps: 每股收益 EPS（只填数字）
+- dividend_yield: 股息率 Dividend Yield（%，只填数字）
+- net_margin: 净利润率 Net Margin（%，只填数字）
+- operating_margin: 营业利润率 Operating Margin（%，只填数字）
+- revenue: 营收（B=十亿，M=百万，填带单位的字符串如 "81.6B"）
+- market_cap: 市值（填带单位字符串如 "5.1T"）
+- platform: 识别到的数据来源平台名称
+
+请严格返回 JSON 格式，不要有任何其他文字或 markdown：
+{"ticker":null,"pe":null,"pb":null,"roe":null,"payout":null,"eps":null,"dividend_yield":null,"net_margin":null,"operating_margin":null,"revenue":null,"market_cap":null,"platform":"unknown","confidence":"high/medium/low","notes":"识别过程中的任何备注"}`;
+
+  try {
+    let contentArr;
+    if (fileType === 'image') {
+      const base64 = imageDataUrl.split(',')[1];
+      const mediaType = imageDataUrl.split(';')[0].split(':')[1];
+      contentArr = [
+        { type:'image', source:{ type:'base64', media_type: mediaType, data: base64 } },
+        { type:'text', text: prompt }
+      ];
+    } else {
+      // PDF — send as document
+      const base64 = pdfDataUrl.split(',')[1];
+      contentArr = [
+        { type:'document', source:{ type:'base64', media_type:'application/pdf', data: base64 } },
+        { type:'text', text: prompt }
+      ];
+    }
+
+    const apiKey = getApiKey();
+    if (!apiKey) { showStatus('请先在顶部填入 Anthropic API Key', 'warning'); return; }
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{ role:'user', content: contentArr }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.map(b=>b.text||'').join('') || '{}';
+    const clean = text.replace(/```json|```/g,'').trim();
+    recognizedData = JSON.parse(clean);
+    lastDataSource = fileType === 'pdf' ? 'PDF' : '截图';
+    showStatus(`✓ 识别完成 · 来源：${recognizedData.platform||fileType==='pdf'?'PDF':'截图'}`, 'success');
+    setTimeout(() => { document.getElementById('smart-status').style.display='none'; }, 2000);
+    renderRecognizedFields();
+  } catch(err) {
+    const msg = err.message || '';
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      showStatus('网络错误：请确认 API Key 正确，或检查网络连接', 'error');
+    } else if (msg.includes('401') || (err.status===401)) {
+      showStatus('API Key 无效，请重新检查并保存', 'error');
+    } else {
+      showStatus('识别失败：' + (err.message||'未知错误'), 'error');
+    }
+    recognizedData = {};
+  }
+}
+
+// ════════════════════════════════════════════
+//  TICKER CODE AUTO SEARCH
+// ════════════════════════════════════════════
+function setTickerAndSearch(t) {
+  document.getElementById('ticker-search-input').value = t;
+  doTickerSearch();
+}
+
+async function doTickerSearch() {
+  const ticker = document.getElementById('ticker-search-input').value.trim().toUpperCase();
+  if (!ticker) { showStatus('请先输入股票代码', 'warning'); return; }
+
+  const btn = document.getElementById('ticker-search-btn');
+  btn.disabled = true;
+  btn.textContent = '搜索中…';
+  document.getElementById('recognized-section').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  showStatus(`正在搜索 ${ticker} 最新财务数据…`);
+
+  const systemPrompt = `你是专业股票财务数据分析师。用户给你一个股票代码，你必须：
+1. 用 web_search 搜索该股票最新的 PE、PB、ROE、股利支付率（搜索词如 "${ticker} PE PB ROE payout ratio"）
+2. 从结果中提取这 4 项数据
+3. 只输出一个 JSON，不要有任何其他文字
+
+JSON 格式：
+{"ticker":"代码","name":"公司名","pe":数字或null,"pb":数字或null,"roe":数字或null,"payout":数字或null,"platform":"数据来源","confidence":"high/medium/low","data_date":"数据日期"}
+
+规则：ROE、股利支付率填纯数字（27.3 不是 27.3%）。找不到填 null。`;
+
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey) { showStatus('请先在顶部填入 Anthropic API Key', 'warning'); btn.disabled=false; btn.textContent='搜索'; return; }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+
+    // ── Round 1: Initial request with web_search tool ──
+    showStatus(`正在搜索 ${ticker}…`, 'loading');
+    let messages = [{ role:'user', content:`请搜索 ${ticker} 的 PE、PB、ROE、股利支付率，输出 JSON。` }];
+
+    let resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers,
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1500,
+        system: systemPrompt,
+        tools:[{ type:'web_search_20250305', name:'web_search' }],
+        messages
+      })
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(()=>({}));
+      const errMsg = errData.error?.message || `HTTP ${resp.status}`;
+      if (resp.status === 401) throw new Error('API Key 无效，请重新检查');
+      throw new Error(errMsg);
+    }
+
+    let data = await resp.json();
+
+    // ── Tool-use loop: keep going until stop_reason is "end_turn" ──
+    let loopCount = 0;
+    while (data.stop_reason === 'tool_use' && loopCount < 5) {
+      loopCount++;
+      showStatus(`AI 正在搜索网络数据… (第${loopCount}次)`, 'loading');
+
+      // Collect all tool_use blocks
+      const toolUseBlocks = data.content.filter(b => b.type === 'tool_use');
+
+      // Build tool_result blocks (web_search results come back automatically)
+      const toolResults = toolUseBlocks.map(tu => ({
+        type: 'tool_result',
+        tool_use_id: tu.id,
+        content: tu.type === 'web_search_20250305' ? [] : []
+      }));
+
+      // Add assistant turn + user turn with tool results
+      messages = [
+        ...messages,
+        { role: 'assistant', content: data.content },
+        { role: 'user', content: toolResults }
+      ];
+
+      resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers,
+        body: JSON.stringify({
+          model:'claude-sonnet-4-6',
+          max_tokens:1500,
+          system: systemPrompt,
+          tools:[{ type:'web_search_20250305', name:'web_search' }],
+          messages
+        })
+      });
+
+      if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message||`HTTP ${resp.status}`); }
+      data = await resp.json();
+    }
+
+    // ── Extract final JSON from last text response ──
+    const fullText = data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
+    const clean = fullText.replace(/```json|```/g,'').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('未能从搜索结果中提取数据');
+
+    recognizedData = JSON.parse(jsonMatch[0]);
+    lastDataSource = '网络搜索';
+    const src = recognizedData.platform || '网络';
+    const date = recognizedData.data_date ? ' · ' + recognizedData.data_date : '';
+    showStatus(`✓ ${recognizedData.name||ticker} 数据获取成功 · 来源：${src}${date}`, 'success');
+    setTimeout(() => { document.getElementById('smart-status').style.display='none'; }, 4000);
+    renderRecognizedFields();
+
+  } catch(err) {
+    const msg = err.message || '';
+    if (msg.includes('API Key') || msg.includes('401')) {
+      showStatus('API Key 无效，请重新检查后保存', 'error');
+    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      showStatus('网络连接失败，请检查网络后重试', 'error');
+    } else {
+      showStatus(`搜索失败：${msg || '无法获取 '+ticker+' 数据'}`, 'error');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '搜索';
+  }
+}
+
+// ════════════════════════════════════════════
+//  RENDER RECOGNIZED FIELDS
+// ════════════════════════════════════════════
+function renderRecognizedFields() {
+  const fields = [
+    { key:'ticker', label:'股票名称', unit:'', isNum:false },
+    { key:'pe', label:'PE 市盈率', unit:'', isNum:true, core:true },
+    { key:'pb', label:'PB 市净率', unit:'', isNum:true },
+    { key:'roe', label:'ROE', unit:'%', isNum:true, core:true },
+    { key:'payout', label:'股利支付率', unit:'%', isNum:true },
+  ];
+
+  const missingCore = fields.filter(f => f.core && (recognizedData[f.key]===null || recognizedData[f.key]===undefined));
+  const confirmedCount = fields.filter(f => recognizedData[f.key]!==null && recognizedData[f.key]!==undefined).length;
+
+  document.getElementById('recog-summary').textContent = `识别到 ${confirmedCount}/${fields.length} 项数据`;
+  document.getElementById('recog-source-tag').textContent = recognizedData.platform && recognizedData.platform!=='unknown' ? '· ' + recognizedData.platform : '';
+
+  let html = '';
+  fields.forEach(f => {
+    const val = recognizedData[f.key];
+    const empty = val===null || val===undefined || val==='';
+    const isMissingCore = empty && f.core;
+    const cls = isMissingCore ? 'field-item missing-core' : (!empty ? 'field-item confirmed' : 'field-item');
+    html += `<div class="${cls}">
+      <div class="field-label"><span class="field-dot"></span>${f.label}${f.unit?' ('+f.unit+')':''}</div>`;
+    if (empty) {
+      html += `<input class="field-input" type="${f.isNum?'number':'text'}" id="rf-${f.key}" placeholder="${isMissingCore?'⚠ 必填':'—'}" oninput="recognizedData['${f.key}']=this.value===''?null:(isNaN(+this.value)?this.value:+this.value)">`;
+    } else {
+      const display = f.isNum && typeof val==='number' ? val.toLocaleString() : val;
+      html += `<div class="field-value">${display}${(!empty&&f.unit)?f.unit:''}</div>`;
+    }
+    html += '</div>';
+  });
+
+  document.getElementById('fields-grid').innerHTML = html;
+  document.getElementById('missing-warning').style.display = missingCore.length ? '' : 'none';
+  document.getElementById('recognized-section').style.display = '';
+}
+
+// ════════════════════════════════════════════
+//  ANALYZE FROM RECOGNIZED
+// ════════════════════════════════════════════
+function analyzeFromRecognized() {
+  const pe = recognizedData.pe ? +recognizedData.pe : null;
+  const pb = recognizedData.pb ? +recognizedData.pb : null;
+  const roe = recognizedData.roe ? +recognizedData.roe : null;
+  const payout = recognizedData.payout ? +recognizedData.payout : null;
+
+  if ((!pe || !roe) && (!pb || !roe)) {
+    alert('请至少补充：PE + ROE（通用）或 PB + ROE（银行/周期股）');
+    return;
+  }
+
+  const correction = getCorrectionFactor(payout);
+  let pr, mode;
+  if (pe && roe) { pr = correction * pe / roe; mode = 'pe'; }
+  else { pr = correction * pb / (roe*roe) * 100; mode = 'pb'; }
+
+  const inputs = {
+    mode, pe, pb, roe, payout, correction,
+    ticker: recognizedData.ticker || '',
+    extra: {
+      pb: pb, eps: recognizedData.eps,
+      net_margin: recognizedData.net_margin,
+      operating_margin: recognizedData.operating_margin,
+      revenue: recognizedData.revenue,
+      market_cap: recognizedData.market_cap,
+      dividend_yield: recognizedData.dividend_yield,
+      notes: recognizedData.notes,
+      data_date: recognizedData.data_date
+    },
+    dataSource: lastDataSource,
+    platform: recognizedData.platform
+  };
+  showResult(pr, inputs);
+}
+
+// ════════════════════════════════════════════
+//  MANUAL ANALYZE
+// ════════════════════════════════════════════
+function analyzeManual() {
+  let pr, inputs = {};
+  if (currentMode === 'pe') {
+    const pe = parseFloat(document.getElementById('pe').value);
+    const roe = parseFloat(document.getElementById('roe').value);
+    const payout = document.getElementById('payout').value===''?null:parseFloat(document.getElementById('payout').value);
+    if (isNaN(pe)||isNaN(roe)||roe<=0||pe<=0) { alert('请填写有效的 PE 和 ROE'); return; }
+    const correction = getCorrectionFactor(payout);
+    pr = correction * pe / roe;
+    const pbM = parseFloat(document.getElementById('pb-manual').value);
+    inputs = { mode:'pe', pe, roe, payout, correction, ticker: document.getElementById('ticker').value,
+      extra:{ pb:isNaN(pbM)?null:pbM, eps:parseFloat(document.getElementById('eps').value)||null },
+      dataSource:'手动' };
+  } else {
+    const pb = parseFloat(document.getElementById('pb').value);
+    const roe = parseFloat(document.getElementById('roe-pb').value);
+    const payout = document.getElementById('payout-pb').value===''?null:parseFloat(document.getElementById('payout-pb').value);
+    if (isNaN(pb)||isNaN(roe)||roe<=0||pb<=0) { alert('请填写有效的 PB 和 ROE'); return; }
+    const correction = getCorrectionFactor(payout);
+    pr = correction * pb / (roe*roe) * 100;
+    inputs = { mode:'pb', pb, roe, payout, correction, ticker:document.getElementById('ticker-pb').value,
+      extra:{}, dataSource:'手动' };
+  }
+  showResult(pr, inputs);
+}
+
+// ════════════════════════════════════════════
+//  CORE MATH
+// ════════════════════════════════════════════
+function getCorrectionFactor(payout) {
+  if (payout===null||payout===undefined) return 1;
+  if (payout>=50) return 1;
+  if (payout<=25) return 2;
+  return 50/payout;
+}
+
+function getGrade(pr) {
+  if (pr<0.40) return { text:'极度低估', color:'#00D395', bg:'#00D39518' };
+  if (pr<0.60) return { text:'巴菲特四折区域', color:'#00D395', bg:'#00D39512' };
+  if (pr<0.80) return { text:'巴菲特六折区域', color:'#a8e063', bg:'#a8e06312' };
+  if (pr<1.00) return { text:'合理偏低', color:'#F0B429', bg:'#F0B42912' };
+  if (pr<=1.05) return { text:'合理估值', color:'#F0B429', bg:'#F0B42912' };
+  if (pr<1.30) return { text:'偏高估值', color:'#ff9f43', bg:'#ff9f4312' };
+  return { text:'明显高估', color:'#FF6B6B', bg:'#FF6B6B12' };
+}
+
+function prToSpectrumPct(pr) { return Math.min(pr/1.5*100, 100); }
+
+// ════════════════════════════════════════════
+//  SHOW RESULT
+// ════════════════════════════════════════════
+function showResult(pr, inputs) {
+  const resultEl = document.getElementById('result');
+  resultEl.style.display = 'block';
+  setTimeout(() => resultEl.scrollIntoView({behavior:'smooth',block:'start'}), 80);
+
+  const grade = getGrade(pr);
+  document.getElementById('pr-display').textContent = pr.toFixed(2);
+  document.getElementById('pr-display').style.color = grade.color;
+  document.getElementById('pr-ticker').textContent = inputs.ticker || '';
+  const badge = document.getElementById('pr-source-badge');
+  badge.textContent = inputs.dataSource ? '数据来源：' + inputs.dataSource + (inputs.platform&&inputs.platform!=='unknown'?' · '+inputs.platform:'') : '';
+  badge.style.display = inputs.dataSource ? '' : 'none';
+  document.getElementById('pr-grade').textContent = grade.text;
+  document.getElementById('pr-grade').style.color = grade.color;
+  document.getElementById('pr-grade').style.background = grade.bg;
+  document.getElementById('spectrum-ptr').style.left = prToSpectrumPct(pr)+'%';
+  document.getElementById('spectrum-ptr').style.color = grade.color;
+
+  renderBreakdown(pr, inputs);
+  validityData = {}; renderValidityChecker(pr, inputs);
+  renderHistoryCompare(pr, inputs);
+  renderSensitivity(pr, inputs);
+  runAIReport(pr, inputs, grade);
+  saveHistory(pr, inputs, grade);
+}
+
+// ════════════════════════════════════════════
+//  RENDER BREAKDOWN
+// ════════════════════════════════════════════
+function renderBreakdown(pr, inputs) {
+  const payoutDisplay = (inputs.payout===null||inputs.payout===undefined)?'50%（默认）':inputs.payout+'%';
+  let rows = `<div class="data-row"><span class="key">股票名称</span><span class="val" style="font-family:var(--font)">${inputs.ticker||'—'}</span></div>`;
+  if (inputs.mode==='pe') {
+    rows += `<div class="data-row"><span class="key">PE（市盈率）</span><span class="val">${inputs.pe}</span></div>`;
+    rows += `<div class="data-row"><span class="key">ROE</span><span class="val">${inputs.roe}%</span></div>`;
+    if (inputs.extra?.pb) rows += `<div class="data-row"><span class="key">PB（市净率）</span><span class="val">${inputs.extra.pb}</span></div>`;
+    if (inputs.extra?.eps) rows += `<div class="data-row"><span class="key">EPS</span><span class="val">${inputs.extra.eps}</span></div>`;
+    if (inputs.extra?.net_margin) rows += `<div class="data-row"><span class="key">净利润率</span><span class="val">${inputs.extra.net_margin}%</span></div>`;
+    if (inputs.extra?.revenue) rows += `<div class="data-row"><span class="key">营收</span><span class="val">${inputs.extra.revenue}</span></div>`;
+    if (inputs.extra?.market_cap) rows += `<div class="data-row"><span class="key">市值</span><span class="val">${inputs.extra.market_cap}</span></div>`;
+  } else {
+    rows += `<div class="data-row"><span class="key">PB（市净率）</span><span class="val">${inputs.pb}</span></div>`;
+    rows += `<div class="data-row"><span class="key">平均 ROE</span><span class="val">${inputs.roe}%</span></div>`;
+  }
+  rows += `<div class="data-row"><span class="key">股利支付率</span><span class="val">${payoutDisplay}</span></div>`;
+  rows += `<div class="data-row"><span class="key">修正系数</span><span class="val" style="color:var(--gold)">${inputs.correction.toFixed(2)}</span></div>`;
+  rows += `<div class="data-row"><span class="key">市赚率 PR</span><span class="val" style="color:var(--green)">${pr.toFixed(4)}</span></div>`;
+  document.getElementById('data-breakdown').innerHTML = rows;
+
+  const fb = document.getElementById('formula-box');
+  if (inputs.mode==='pe') {
+    fb.innerHTML = `<span class="hl">PR</span> = 修正系数 × PE ÷ ROE<br>&nbsp;&nbsp;&nbsp;= ${inputs.correction.toFixed(2)} × ${inputs.pe} ÷ ${inputs.roe}<br>&nbsp;&nbsp;&nbsp;= <span class="hl">${pr.toFixed(4)}</span>`;
+  } else {
+    fb.innerHTML = `<span class="hl">PR</span> = 修正系数 × PB ÷ ROE² × 100<br>&nbsp;&nbsp;&nbsp;= ${inputs.correction.toFixed(2)} × ${inputs.pb} ÷ ${inputs.roe}² × 100<br>&nbsp;&nbsp;&nbsp;= <span class="hl">${pr.toFixed(4)}</span>`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  RENDER HISTORY COMPARE
+// ════════════════════════════════════════════
+function renderHistoryCompare(pr, inputs) {
+  const ticker = (inputs.ticker||'').toLowerCase();
+  const sameStock = ticker ? prHistory.filter(h=>h.ticker&&h.ticker.toLowerCase()===ticker) : [];
+  const histPRs = sameStock.map(h=>h.pr);
+  const avg = histPRs.length ? histPRs.reduce((a,b)=>a+b,0)/histPRs.length : null;
+  const hi = histPRs.length ? Math.max(...histPRs) : null;
+  const lo = histPRs.length ? Math.min(...histPRs) : null;
+
+  const items = [
+    { label:'当前 PR', val:pr, color:getGrade(pr).color, note:'本次计算' },
+    { label:'历史均值', val:avg, color:'var(--blue)', note:sameStock.length?`${sameStock.length}次记录`:'暂无记录' },
+    { label:'历史最高', val:hi, color:'var(--red)', note:'记录以来' },
+    { label:'历史最低', val:lo, color:'var(--green)', note:'记录以来' },
+  ];
+  document.getElementById('history-grid').innerHTML = items.map(i=>`
+    <div class="history-item">
+      <div class="h-label">${i.label}</div>
+      <div class="h-val" style="color:${i.color}">${i.val!==null?i.val.toFixed(2):'—'}</div>
+      <div class="h-note">${i.note}</div>
+    </div>`).join('');
+
+  const allVals = [pr,avg,hi,lo].filter(v=>v!==null);
+  const maxV = Math.max(...allVals, 1.5);
+  const bars = [
+    {label:'当前',val:pr,color:getGrade(pr).color},
+    ...(avg!==null?[{label:'均值',val:avg,color:'var(--blue)'}]:[]),
+    ...(hi!==null?[{label:'最高',val:hi,color:'var(--red)'}]:[]),
+    ...(lo!==null&&lo!==pr?[{label:'最低',val:lo,color:'var(--green)'}]:[]),
+  ];
+  document.getElementById('history-bars').innerHTML = bars.map(b=>`
+    <div class="history-bar-row">
+      <span class="h-bar-label">${b.label}</span>
+      <div class="history-bar-track"><div class="history-bar-fill" style="width:${Math.min(b.val/maxV*100,100)}%;background:${b.color}"></div></div>
+      <span class="history-bar-num" style="color:${b.color}">${b.val.toFixed(2)}</span>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════
+//  SENSITIVITY
+// ════════════════════════════════════════════
+function renderSensitivity(pr, inputs) {
+  const scenarios = [{label:'ROE -30%',r:inputs.roe*0.7},{label:'ROE 不变',r:inputs.roe},{label:'ROE +30%',r:inputs.roe*1.3}];
+  document.getElementById('sensitivity-grid').innerHTML = scenarios.map(s=>{
+    const np = inputs.mode==='pe' ? inputs.correction*inputs.pe/s.r : inputs.correction*inputs.pb/(s.r*s.r)*100;
+    const g = getGrade(np);
+    return `<div class="sens-item">
+      <div class="s-label">${s.label}</div>
+      <div class="s-val" style="color:${g.color}">${np.toFixed(2)}</div>
+      <div style="font-size:9px;color:${g.color};margin-top:2px">${g.text}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  AI REPORT
+// ════════════════════════════════════════════
+async function runAIReport(pr, inputs, grade) {
+  document.getElementById('ai-report-content').innerHTML = '<div class="loading-dots"><span>●</span><span>●</span><span>●</span></div>';
+  const ticker = inputs.ticker || '该股票';
+  const payoutStr = (inputs.payout===null||inputs.payout===undefined)?'50%（默认）':inputs.payout+'%';
+  const extraLines = Object.entries(inputs.extra||{}).filter(([k,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' · ');
+
+  const prompt = `你是一位专业价值投资分析师，请基于以下数据用中文写一份结构化分析报告（总共300字以内）。
+
+股票: ${ticker}
+数据来源: ${inputs.dataSource||'手动'}${inputs.platform?' ('+inputs.platform+')':''}
+模式: ${inputs.mode==='pe'?'PE模式':'PB模式'}
+${inputs.mode==='pe'?`PE: ${inputs.pe}, ROE: ${inputs.roe}%`:`PB: ${inputs.pb}, 平均ROE: ${inputs.roe}%`}
+股利支付率: ${payoutStr}, 修正系数: ${inputs.correction.toFixed(2)}
+市赚率PR: ${pr.toFixed(4)}, 估值等级: ${grade.text}
+${extraLines?'其他数据: '+extraLines:''}
+
+请按四个部分撰写，每部分以【标题】开头，不要使用markdown符号：
+【估值解读】
+【关键驱动因素】
+【风险提示】（ROE 或股利政策变化的影响）
+【投资参考】（一句话结论）`;
+
+  try {
+    const apiKey = getApiKey();
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await resp.json();
+    const text = data.content?.map(b=>b.text||'').join('')||'';
+    renderReport(text);
+  } catch(e) {
+    renderReport(`【估值解读】当前市赚率 PR 为 ${pr.toFixed(2)}，估值等级「${grade.text}」。\n\n【关键驱动因素】ROE ${inputs.roe}%，修正系数 ${inputs.correction.toFixed(2)}。\n\n【风险提示】若 ROE 下降 30%，PR 将上升约 43%。\n\n【投资参考】请结合公司基本面与行业趋势综合判断。`);
+  }
+}
+
+function renderReport(text) {
+  const parts = text.split(/【([^】]+)】/).filter(s=>s.trim());
+  let html = '';
+  for (let i=0;i<parts.length;i+=2) {
+    if (parts[i]&&parts[i+1]) {
+      html += `<div class="report-block"><div class="report-block-title">${parts[i]}</div><div class="report-text">${parts[i+1].trim()}</div></div>`;
+    }
+  }
+  document.getElementById('ai-report-content').innerHTML = html || `<div class="report-text">${text}</div>`;
+}
+
+// ════════════════════════════════════════════
+//  HISTORY LOG
+// ════════════════════════════════════════════
+function saveHistory(pr, inputs, grade) {
+  const entry = {
+    id: Date.now(),
+    date: new Date().toLocaleString('zh-TW',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+    ticker: inputs.ticker||'未命名',
+    pr: Math.round(pr*10000)/10000,
+    grade: grade.text, gradeColor: grade.color,
+    mode: inputs.mode, source: inputs.dataSource||'手动'
+  };
+  prHistory.unshift(entry);
+  if (prHistory.length>50) prHistory=prHistory.slice(0,50);
+  try { localStorage.setItem('pr-history', JSON.stringify(prHistory)); } catch(e){}
+}
+
+function deleteHistoryEntry(id) {
+  prHistory = prHistory.filter(h => h.id !== id);
+  try { localStorage.setItem('pr-history', JSON.stringify(prHistory)); } catch(e){}
+  renderHistoryLog();
+}
+
+function clearAllHistory() {
+  if (!confirm('确认清空全部历史记录？')) return;
+  prHistory = [];
+  try { localStorage.removeItem('pr-history'); } catch(e){}
+  renderHistoryLog();
+}
+
+function renderHistoryLog() {
+  const el = document.getElementById('history-log-list');
+  if (!prHistory.length) {
+    el.innerHTML = '<div class="empty-log">还没有分析记录<br>完成第一次分析后会显示在这里</div>';
+    return;
+  }
+  const headerHtml = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span style="font-size:11px;color:var(--muted)">${prHistory.length} 条记录</span>
+    <button onclick="clearAllHistory()" style="font-size:11px;color:var(--red);background:transparent;border:1px solid var(--red);border-radius:5px;padding:3px 9px;cursor:pointer;font-family:var(--font)">清空全部</button>
+  </div>`;
+  el.innerHTML = headerHtml + prHistory.map(h=>`
+    <div class="log-item" id="log-${h.id}">
+      <div style="flex:1;min-width:0">
+        <div class="log-ticker">${h.ticker}<span class="log-source">${h.source||''}</span></div>
+        <div class="log-time">${h.date} · ${h.mode==='pe'?'PE':'PB'}模式</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <span class="log-pr" style="color:${h.gradeColor}">${h.pr}</span>
+        <span class="log-grade" style="color:${h.gradeColor};background:${h.gradeColor}18">${h.grade}</span>
+        <button onclick="deleteHistoryEntry(${h.id})" title="删除" style="background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">×</button>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════
+//  VALIDITY CHECKER — 5 RED FLAGS FROM PDF
+// ════════════════════════════════════════════
+
+// Store extra validity inputs
+let validityData = {};
+
+// Config for 6 red flags (5 original + Goodwill/Inventory)
+// All input labels use English names matching financial statement terminology
+const RED_FLAGS = [
+  {
+    id: 'leverage',
+    title: '⚠ Trap 1 · High Leverage',
+    shortTitle: 'Debt-to-Assets',
+    desc: 'High-debt companies can artificially inflate ROE via leverage (ROE = ROA × Equity Multiplier). A low PR may be a high-risk illusion. Excludes financial sector.',
+    redCondition: 'Total Liabilities / Total Assets > 70%',
+    inputs: [
+      { key: 'total_liabilities', label: 'Total Liabilities', placeholder: 'e.g. 12.81B' },
+      { key: 'total_assets',      label: 'Total Assets',      placeholder: 'e.g. 96.05B' },
+    ],
+    check(d) {
+      const r = d.debt_ratio;
+      if (r === null || r === undefined) return 'unknown';
+      return r > 70 ? 'fail' : 'pass';
+    },
+    compute(d) {
+      if (d.total_liabilities && d.total_assets) {
+        const l = parseNum(d.total_liabilities), a = parseNum(d.total_assets);
+        if (a > 0) return { debt_ratio: l / a * 100 };
+      }
+      return {};
+    },
+    formatResult(d) {
+      if (d.debt_ratio != null)
+        return `Debt-to-Assets = ${d.debt_ratio.toFixed(1)}%  (Red flag: > 70%)`;
+      return null;
+    }
+  },
+  {
+    id: 'cyclical',
+    title: '⚠ Trap 2 · Cyclical Industry Peak',
+    shortTitle: 'Cyclical Risk',
+    desc: 'Shipping, steel, coal, metals — at the peak of a cycle PE is ultra-low and ROE ultra-high, making PR deceptively cheap right before the downturn.',
+    redCondition: 'Manual judgment — enter industry name',
+    inputs: [
+      { key: 'industry', label: 'Industry / Sector', placeholder: 'e.g. Semiconductors, Shipping, Steel' },
+    ],
+    check(d) {
+      const cyclicals = ['shipping','航运','steel','钢铁','coal','煤炭','mining','有色','矿','oil','石油','chemical','化工','commodity','大宗','copper','aluminum','铜','铝','锌','镍','fertilizer','cement'];
+      const ind = (d.industry || '').toLowerCase();
+      if (!ind) return 'unknown';
+      return cyclicals.some(k => ind.includes(k)) ? 'warn' : 'pass';
+    },
+    compute(d) { return {}; },
+    formatResult(d) {
+      const cyclicals = ['shipping','航运','steel','钢铁','coal','煤炭','mining','有色','矿','oil','石油','chemical','化工','commodity','大宗','copper','aluminum','铜','铝','锌','镍','fertilizer','cement'];
+      const ind = (d.industry || '').toLowerCase();
+      if (!ind) return null;
+      if (cyclicals.some(k => ind.includes(k)))
+        return `「${d.industry}」is a cyclical sector — use multi-year average ROE instead`;
+      return `「${d.industry}」— no cyclical pattern detected`;
+    }
+  },
+  {
+    id: 'onetime',
+    title: '⚠ Trap 3 · One-Time Earnings',
+    shortTitle: 'Core Profit Ratio',
+    desc: 'Asset sales, government subsidies, lawsuit settlements — these spike Net Income without reflecting sustainable earnings. Use Operating Income (Non-GAAP) vs Net Income.',
+    redCondition: 'Operating Income / Net Income < 80%',
+    inputs: [
+      { key: 'core_profit', label: 'Operating Income  (or Adjusted / Non-GAAP Net Income)', placeholder: 'e.g. 48.5B' },
+      { key: 'net_profit',  label: 'Net Income',                                              placeholder: 'e.g. 55.2B' },
+    ],
+    check(d) {
+      const r = d.core_profit_ratio;
+      if (r === null || r === undefined) return 'unknown';
+      return r < 80 ? 'fail' : 'pass';
+    },
+    compute(d) {
+      if (d.core_profit && d.net_profit) {
+        const c = parseNum(d.core_profit), n = parseNum(d.net_profit);
+        if (n > 0) return { core_profit_ratio: c / n * 100 };
+      }
+      return {};
+    },
+    formatResult(d) {
+      if (d.core_profit_ratio != null)
+        return `Operating Income / Net Income = ${d.core_profit_ratio.toFixed(1)}%  (Red flag: < 80%)`;
+      return null;
+    }
+  },
+  {
+    id: 'goodwill',
+    title: '⚠ Trap 4 · Goodwill & Inventory Bloat',
+    shortTitle: 'Goodwill + Inventory / Total Assets',
+    desc: 'Goodwill (from past acquisitions) and Inventory that are overvalued relative to Total Assets may trigger massive write-downs, shrinking equity and distorting future ROE.',
+    redCondition: '(Goodwill + Inventories) / Total Assets > 15%',
+    inputs: [
+      { key: 'goodwill',    label: 'Goodwill',            placeholder: 'e.g. 3.5B  (Balance Sheet)' },
+      { key: 'inventories', label: 'Inventories',          placeholder: 'e.g. 5.6B  (Balance Sheet)' },
+      { key: 'total_assets2', label: 'Total Assets',       placeholder: 'e.g. 96.0B' },
+    ],
+    check(d) {
+      const r = d.goodwill_inv_ratio;
+      if (r === null || r === undefined) return 'unknown';
+      return r > 15 ? 'fail' : 'pass';
+    },
+    compute(d) {
+      if (d.total_assets2) {
+        const g = parseNum(d.goodwill) || 0;
+        const inv = parseNum(d.inventories) || 0;
+        const a = parseNum(d.total_assets2);
+        if (a > 0) return { goodwill_inv_ratio: (g + inv) / a * 100 };
+      }
+      return {};
+    },
+    formatResult(d) {
+      if (d.goodwill_inv_ratio != null)
+        return `(Goodwill + Inventories) / Total Assets = ${d.goodwill_inv_ratio.toFixed(1)}%  (Red flag: > 15%)`;
+      return null;
+    }
+  },
+  {
+    id: 'impairment',
+    title: '⚠ Trap 5 · Asset Write-downs vs Buybacks',
+    shortTitle: 'Impairment Loss / Net Income',
+    desc: 'Large impairment losses (Goodwill write-offs, inventory write-downs) shrink equity and artificially boost future ROE. Share buybacks also shrink equity but are a positive signal — distinguish them.',
+    redCondition: 'Impairment Losses / Net Income > 10%',
+    inputs: [
+      { key: 'impairment',  label: 'Impairment Losses  (Income Statement)', placeholder: 'e.g. 0.5B  (enter 0 if none)' },
+      { key: 'net_profit2', label: 'Net Income',                             placeholder: 'e.g. 55.2B' },
+    ],
+    check(d) {
+      const r = d.impairment_ratio;
+      if (r === null || r === undefined) return 'unknown';
+      return r > 10 ? 'fail' : 'pass';
+    },
+    compute(d) {
+      if (d.impairment !== null && d.impairment !== undefined && d.net_profit2) {
+        const i = parseNum(d.impairment), n = parseNum(d.net_profit2);
+        if (n > 0) return { impairment_ratio: i / n * 100 };
+      }
+      return {};
+    },
+    formatResult(d) {
+      if (d.impairment_ratio != null)
+        return `Impairment Losses / Net Income = ${d.impairment_ratio.toFixed(1)}%  (Red flag: > 10%)`;
+      return null;
+    }
+  },
+  {
+    id: 'cashflow',
+    title: '⚠ Trap 6 · Paper Profits (No Real Cash)',
+    shortTitle: 'Cash Flow / Net Income',
+    desc: 'Operating Cash Flow / Net Income < 0.8 means most profit sits in Accounts Receivable — no actual cash collected. The ROE and PR are built on paper numbers.',
+    redCondition: 'Operating Cash Flow / Net Income < 0.8',
+    inputs: [
+      { key: 'operating_cf', label: 'Net Cash from Operating Activities  (Cash Flow Statement)', placeholder: 'e.g. 48.6B' },
+      { key: 'net_profit3',  label: 'Net Income',                                                 placeholder: 'e.g. 55.2B' },
+    ],
+    check(d) {
+      const r = d.cash_profit_ratio;
+      if (r === null || r === undefined) return 'unknown';
+      return r < 0.8 ? 'fail' : 'pass';
+    },
+    compute(d) {
+      if (d.operating_cf && d.net_profit3) {
+        const c = parseNum(d.operating_cf), n = parseNum(d.net_profit3);
+        if (n > 0) return { cash_profit_ratio: c / n };
+      }
+      return {};
+    },
+    formatResult(d) {
+      if (d.cash_profit_ratio != null)
+        return `Operating CF / Net Income = ${d.cash_profit_ratio.toFixed(2)}  (Red flag: < 0.8)`;
+      return null;
+    }
+  }
+];
+
+// Parse numbers like "12.81B", "55,200M", "0.5" → float
+function parseNum(val) {
+  if (val === null || val === undefined || val === '') return null;
+  const s = String(val).replace(/,/g,'').trim().toUpperCase();
+  const m = s.match(/^([\d.]+)\s*([BKMT]?)$/);
+  if (!m) return parseFloat(s) || null;
+  const n = parseFloat(m[1]);
+  const unit = m[2];
+  if (unit === 'B') return n * 1e9;
+  if (unit === 'M') return n * 1e6;
+  if (unit === 'K') return n * 1e3;
+  if (unit === 'T') return n * 1e12;
+  return n;
+}
+
+function renderValidityChecker(pr, inputs) {
+  // Pre-populate validityData from recognized data if available
+  if (inputs.extra) {
+    if (inputs.extra.net_margin !== undefined) validityData._net_margin = inputs.extra.net_margin;
+  }
+
+  const itemsEl = document.getElementById('validity-items');
+  let html = '';
+
+  RED_FLAGS.forEach((flag, idx) => {
+    // Compute derived values
+    const computed = flag.compute(validityData);
+    Object.assign(validityData, computed);
+
+    const status = flag.check(validityData);
+    const resultLine = flag.formatResult(validityData);
+
+    const dotClass = status;
+    const badgeMap = { pass:'✓ 通过', fail:'🔴 红灯', unknown:'— 待填写', warn:'⚠ 注意' };
+    const badge = badgeMap[status] || '—';
+
+    // Escape desc/condition for data attributes
+    const safeDesc = flag.desc.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const safeCond = flag.redCondition.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const safeTitle = flag.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    html += `<div class="validity-item" id="vitem-${flag.id}">
+      <div class="validity-item-header" onclick="toggleVItem('${flag.id}')">
+        <div class="v-status-dot ${dotClass}" id="vdot-${flag.id}"></div>
+        <div class="v-item-title">${flag.title}</div>
+        <button class="v-info-btn" onclick="showInfoModal(event,'${flag.id}')" title="说明">i</button>
+        <div class="v-item-badge ${dotClass}" id="vbadge-${flag.id}">${badge}</div>
+        <div class="v-chevron" id="vchev-${flag.id}">▼</div>
+      </div>
+      <div class="v-item-body hidden" id="vbody-${flag.id}">`;
+
+    flag.inputs.forEach(inp => {
+      const existing = validityData[inp.key];
+      html += `<div class="v-input-row">
+        <span class="v-input-label">${inp.label}</span>
+        <input class="v-input" type="text" id="vinput-${inp.key}"
+          value="${existing !== null && existing !== undefined ? existing : ''}"
+          placeholder="${inp.placeholder}"
+          oninput="onValidityInput('${flag.id}', '${inp.key}', this.value)">
+      </div>`;
+    });
+
+    if (resultLine) {
+      html += `<div class="v-result-line ${dotClass}" id="vresult-${flag.id}">${resultLine}</div>`;
+    } else {
+      html += `<div class="v-unknown-note" id="vresult-${flag.id}">Enter data above to calculate</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  itemsEl.innerHTML = html;
+  updateValidityOverall();
+}
+
+function toggleVItem(id) {
+  const body = document.getElementById('vbody-' + id);
+  const chev = document.getElementById('vchev-' + id);
+  const isHidden = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !isHidden);
+  chev.classList.toggle('open', isHidden);
+}
+
+function onValidityInput(flagId, key, value) {
+  validityData[key] = value === '' ? null : value;
+
+  const flag = RED_FLAGS.find(f => f.id === flagId);
+  if (!flag) return;
+
+  // Recompute
+  const computed = flag.compute(validityData);
+  Object.assign(validityData, computed);
+
+  // Update status
+  const status = flag.check(validityData);
+  const resultLine = flag.formatResult(validityData);
+  const badgeMap = { pass:'✓ 通过', fail:'🔴 红灯', unknown:'— 待填写', warn:'⚠ 注意' };
+
+  document.getElementById('vdot-' + flagId).className = 'v-status-dot ' + status;
+  document.getElementById('vbadge-' + flagId).className = 'v-item-badge ' + status;
+  document.getElementById('vbadge-' + flagId).textContent = badgeMap[status] || '—';
+
+  const resultEl = document.getElementById('vresult-' + flagId);
+  if (resultLine) {
+    resultEl.className = 'v-result-line ' + status;
+    resultEl.textContent = resultLine;
+  } else {
+    resultEl.className = 'v-unknown-note';
+    resultEl.textContent = '请填写上方数据以自动计算';
+  }
+
+  updateValidityOverall();
+}
+
+function updateValidityOverall() {
+  const results = RED_FLAGS.map(f => f.check(validityData));
+  const failCount = results.filter(r => r === 'fail').length;
+  const warnCount = results.filter(r => r === 'warn').length;
+  const unknownCount = results.filter(r => r === 'unknown').length;
+  const knownCount = RED_FLAGS.length - unknownCount;
+
+  const overallEl = document.getElementById('validity-overall');
+  const iconEl = document.getElementById('v-overall-icon');
+  const titleEl = document.getElementById('v-overall-title');
+  const descEl = document.getElementById('v-overall-desc');
+
+  overallEl.className = 'validity-overall';
+
+  if (failCount >= 2) {
+    overallEl.classList.add('warn');
+    iconEl.textContent = '🔴';
+    titleEl.textContent = `市赚率参考价值低 — ${failCount} 项红灯触发`;
+    descEl.textContent = '多项财务指标失真风险，市赚率低估值可能是陷阱，建议结合其他估值方式交叉验证。';
+  } else if (failCount === 1 || warnCount >= 1) {
+    overallEl.classList.add('partial');
+    iconEl.textContent = '⚠️';
+    titleEl.textContent = failCount === 1 ? `市赚率参考价值需谨慎 — 1 项红灯` : `注意行业周期风险`;
+    descEl.textContent = '存在一定失真风险，建议进一步核查标红项目，不宜单独依赖市赚率做决策。';
+  } else if (knownCount === 0) {
+    overallEl.classList.add('partial');
+    iconEl.textContent = '❓';
+    titleEl.textContent = '审核待完成';
+    descEl.textContent = `展开下方各条目填写财务数据，系统将自动判断市赚率是否有效。`;
+  } else {
+    overallEl.classList.add('pass');
+    iconEl.textContent = '✅';
+    titleEl.textContent = `市赚率有效 — 已检测 ${knownCount} 项均通过`;
+    descEl.textContent = '未检测到明显财务失真信号，市赚率估值结果具参考价值。';
+  }
+}
+
+
+// ════════════════════════════════════════════
+//  INFO MODAL
+// ════════════════════════════════════════════
+function showInfoModal(e, flagId) {
+  e.stopPropagation(); // don't toggle the item
+  const flag = RED_FLAGS.find(f => f.id === flagId);
+  if (!flag) return;
+  document.getElementById('info-modal-title').textContent = flag.title;
+  document.getElementById('info-modal-desc').textContent = flag.desc;
+  document.getElementById('info-modal-red').textContent = '🔴 Red Flag: ' + flag.redCondition;
+  document.getElementById('info-modal-overlay').classList.remove('hidden');
+}
+
+function hideInfoModal() {
+  document.getElementById('info-modal-overlay').classList.add('hidden');
+}
+
+function closeInfoModal(e) {
+  // close when clicking the dark overlay (not the modal box)
+  if (e.target === document.getElementById('info-modal-overlay')) hideInfoModal();
+}
+
+// ════════════════════════════════════════════
+//  VALIDITY SOURCE SWITCHING
+// ════════════════════════════════════════════
+let currentValidityMode = 'manual';
+
+function switchValidityMode(mode) {
+  currentValidityMode = mode;
+  ['manual','pdf','search'].forEach(m => {
+    document.getElementById('vmode-'+m).classList.toggle('active', m===mode);
+    document.getElementById('vmode-'+m+'-panel').style.display = m===mode ? '' : 'none';
+  });
+}
+
+function resetVPdf(e) {
+  e.stopPropagation();
+  document.getElementById('v-pdf-placeholder').style.display = '';
+  document.getElementById('v-pdf-preview').style.display = 'none';
+  document.getElementById('v-pdf-status').style.display = 'none';
+  document.getElementById('v-pdf-input').value = '';
+}
+
+// Reuse handleFile — register 'vpdf' type
+const _origHandleFile = handleFile;
+function handleFile(e, type) {
+  if (type === 'vpdf') {
+    const file = e.target.files[0];
+    if (file) processValidityFile(file);
+    return;
+  }
+  _origHandleFile(e, type);
+}
+
+// Also intercept dropFile for vpdf
+const _origDropFile = dropFile;
+function dropFile(e, type) {
+  if (type === 'vpdf') {
+    e.preventDefault();
+    dragLeave(e, 'v-pdf-zone');
+    const file = e.dataTransfer.files[0];
+    if (file) processValidityFile(file);
+    return;
+  }
+  _origDropFile(e, type);
+}
+
+async function processValidityFile(file) {
+  document.getElementById('v-pdf-placeholder').style.display = 'none';
+  document.getElementById('v-pdf-preview').style.display = '';
+  document.getElementById('v-pdf-name').textContent = file.name;
+  document.getElementById('v-pdf-size').textContent = (file.size/1024).toFixed(0) + ' KB · PDF 财报';
+  showVStatus('v-pdf-status', 'AI 正在提取财务数据…', 'loading');
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const base64 = ev.target.result.split(',')[1];
+    const mediaType = ev.target.result.split(';')[0].split(':')[1];
+    await fetchValidityData({ type:'pdf', base64, mediaType });
+  };
+  reader.readAsDataURL(file);
+}
+
+async function doValiditySearch() {
+  const ticker = document.getElementById('v-search-ticker').value.trim().toUpperCase();
+  if (!ticker) return;
+  const btn = document.getElementById('v-search-btn');
+  btn.disabled = true; btn.textContent = '搜索中…';
+  showVStatus('v-search-status', `正在搜索 ${ticker} 财务数据…`, 'loading');
+  await fetchValidityData({ type:'search', ticker });
+  btn.disabled = false; btn.textContent = '搜索';
+}
+
+function showVStatus(elId, msg, type) {
+  const el = document.getElementById(elId);
+  el.style.display = '';
+  const colors = { loading:'var(--blue)', success:'var(--green)', error:'var(--red)', warning:'var(--gold)' };
+  el.innerHTML = `<div style="font-size:12px;color:${colors[type]||'var(--muted)'};padding:7px 10px;background:${colors[type]||'var(--muted)'}12;border:1px solid ${colors[type]||'var(--muted)'}30;border-radius:6px">${msg}</div>`;
+}
+
+async function fetchValidityData({ type, base64, mediaType, ticker }) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showVStatus(type==='pdf'?'v-pdf-status':'v-search-status', '请先在顶部填入 API Key', 'error');
+    return;
+  }
+
+  const prompt = `You are a financial analyst. Extract ONLY these specific financial figures from the data provided and return a single JSON object. No other text.
+
+Required fields (use null if not found):
+{
+  "total_assets": number or null,          // Balance Sheet: Total Assets
+  "total_liabilities": number or null,     // Balance Sheet: Total Liabilities
+  "goodwill": number or null,              // Balance Sheet: Goodwill
+  "inventories": number or null,           // Balance Sheet: Inventories
+  "net_income": number or null,            // Income Statement: Net Income
+  "operating_income": number or null,      // Income Statement: Operating Income
+  "impairment_losses": number or null,     // Income Statement: Impairment / Asset Write-down
+  "operating_cash_flow": number or null,   // Cash Flow Statement: Net Cash from Operating Activities
+  "industry": "sector name or null",
+  "currency": "USD/HKD/TWD etc",
+  "period": "e.g. FY2025 or Q1 2026"
+}
+
+Rules: All numbers in the original currency units (do NOT convert to B/M). Return raw JSON only.`;
+
+  try {
+    let messages;
+    if (type === 'pdf') {
+      messages = [{ role:'user', content:[
+        { type:'document', source:{ type:'base64', media_type: mediaType, data: base64 } },
+        { type:'text', text: prompt }
+      ]}];
+    } else {
+      messages = [{ role:'user', content:`Search for ${ticker} latest annual financial statements and extract: Total Assets, Total Liabilities, Goodwill, Inventories, Net Income, Operating Income, Impairment Losses, Operating Cash Flow. ${prompt}` }];
+    }
+
+    const headers = { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' };
+    const tools = type === 'search' ? [{ type:'web_search_20250305', name:'web_search' }] : undefined;
+
+    let resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers,
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1500, messages, ...(tools?{tools}:{}) })
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    let data = await resp.json();
+
+    // Tool-use loop for search
+    let loops = 0;
+    while (data.stop_reason === 'tool_use' && loops++ < 4) {
+      const toolUse = data.content.filter(b => b.type === 'tool_use');
+      messages = [...messages, { role:'assistant', content:data.content },
+        { role:'user', content: toolUse.map(tu=>({ type:'tool_result', tool_use_id:tu.id, content:[] })) }];
+      resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers,
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1500, messages, tools })
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      data = await resp.json();
+    }
+
+    const text = data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
+    const jsonMatch = text.replace(/```json|```/g,'').trim().match(/{[\s\S]*}/);
+    if (!jsonMatch) throw new Error('No data found');
+    const extracted = JSON.parse(jsonMatch[0]);
+
+    // Map extracted fields to validityData keys
+    const mapping = {
+      total_assets:       ['total_assets', 'total_assets2'],
+      total_liabilities:  ['total_liabilities'],
+      goodwill:           ['goodwill'],
+      inventories:        ['inventories'],
+      net_income:         ['net_profit', 'net_profit2', 'net_profit3'],
+      operating_income:   ['core_profit'],
+      impairment_losses:  ['impairment'],
+      operating_cash_flow:['operating_cf'],
+      industry:           ['industry'],
+    };
+
+    let filled = 0;
+    Object.entries(mapping).forEach(([src, keys]) => {
+      const val = extracted[src];
+      if (val !== null && val !== undefined) {
+        keys.forEach(k => { validityData[k] = val; });
+        filled++;
+      }
+    });
+
+    const statusId = type === 'pdf' ? 'v-pdf-status' : 'v-search-status';
+    showVStatus(statusId, `✓ 成功提取 ${filled} 项数据（${extracted.period||''}${extracted.currency?' · '+extracted.currency:''}）— 已自动填入下方各条目`, 'success');
+
+    // Recompute all flags and re-render
+    RED_FLAGS.forEach(flag => {
+      const computed = flag.compute(validityData);
+      Object.assign(validityData, computed);
+    });
+    // Refresh input values in DOM
+    Object.entries(validityData).forEach(([k, v]) => {
+      const el = document.getElementById('vinput-' + k);
+      if (el && v !== null && v !== undefined) {
+        el.value = typeof v === 'number' && v > 1e6 ? (v/1e9).toFixed(2)+'B' : v;
+      }
+    });
+    // Update each flag badge
+    RED_FLAGS.forEach(flag => {
+      const status = flag.check(validityData);
+      const resultLine = flag.formatResult(validityData);
+      const badgeMap = { pass:'✓ 通过', fail:'🔴 Red Flag', unknown:'— Pending', warn:'⚠ Note' };
+      const dotEl = document.getElementById('vdot-'+flag.id);
+      const badgeEl = document.getElementById('vbadge-'+flag.id);
+      const resultEl = document.getElementById('vresult-'+flag.id);
+      if (dotEl) dotEl.className = 'v-status-dot ' + status;
+      if (badgeEl) { badgeEl.className = 'v-item-badge ' + status; badgeEl.textContent = badgeMap[status]||'—'; }
+      if (resultEl) {
+        if (resultLine) { resultEl.className = 'v-result-line ' + status; resultEl.textContent = resultLine; }
+        else { resultEl.className = 'v-unknown-note'; resultEl.textContent = 'Enter data above to calculate'; }
+      }
+    });
+    updateValidityOverall();
+
+  } catch(err) {
+    const statusId = type === 'pdf' ? 'v-pdf-status' : 'v-search-status';
+    showVStatus(statusId, `提取失败：${err.message}`, 'error');
+  }
+}
+
+</script>
+
+<!-- INFO MODAL (shared, content swapped dynamically) -->
+<div class="info-modal-overlay hidden" id="info-modal-overlay" onclick="closeInfoModal(event)">
+  <div class="info-modal">
+    <button class="info-modal-close" onclick="hideInfoModal()">✕</button>
+    <div class="info-modal-title" id="info-modal-title"></div>
+    <div class="info-modal-desc" id="info-modal-desc"></div>
+    <div class="info-modal-red" id="info-modal-red"></div>
+  </div>
+</div>
+
+
+<script>
+// ── PWA: Register Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+
+// ── PWA: Install prompt ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 3 seconds if not installed
+  setTimeout(showInstallBanner, 3000);
+});
+
+function showInstallBanner() {
+  if (!deferredPrompt) return;
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    deferredPrompt = null;
+    document.getElementById('install-banner').style.display = 'none';
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner').style.display = 'none';
+  deferredPrompt = null;
+}
+</script>
+
+<!-- PWA Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:1000;
+  background:#161B22;border-top:1px solid #30363D;padding:14px 16px;
+  align-items:center;gap:12px;box-shadow:0 -8px 30px rgba(0,0,0,.4)">
+  <div style="width:36px;height:36px;background:linear-gradient(135deg,#00D395,#00a870);
+    border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:#0D1117;flex-shrink:0">PR</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:13px;font-weight:600;color:#E6EDF3">添加到主屏幕</div>
+    <div style="font-size:11px;color:#7D8590">像 App 一样使用，支持离线</div>
+  </div>
+  <button onclick="installPWA()" style="padding:8px 14px;background:#00D395;color:#0D1117;
+    border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+    font-family:'Inter',sans-serif;white-space:nowrap">安装</button>
+  <button onclick="dismissInstall()" style="padding:8px;background:transparent;
+    border:1px solid #30363D;border-radius:8px;color:#7D8590;cursor:pointer;font-size:13px">✕</button>
+</div>
+
+
+</body>
+</html>
