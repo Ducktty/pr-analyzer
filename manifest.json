@@ -2,7 +2,7 @@
   "name": "市赚率分析器",
   "short_name": "市赚率 PR",
   "description": "AI 价值投资分析工具 · Price-to-Earnings-on-ROE",
-  "start_url": "./pr-analyzer.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0D1117",
@@ -30,7 +30,7 @@
     {
       "name": "手动分析",
       "short_name": "手动",
-      "url": "./pr-analyzer.html#manual",
+      "url": "./pr-analyzer-1.html#manual",
       "description": "直接输入数据分析"
     }
   ],

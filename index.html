@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="市赚率 PR">
+<meta name="theme-color" content="#0D1117">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>市赚率 PR · 价值投资分析</title>
+<style>
+  body {
+    margin: 0;
+    background: #0D1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: -apple-system, sans-serif;
+  }
+  .loader {
+    text-align: center;
+    color: #7D8590;
+  }
+  .logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    margin: 0 auto 16px;
+    display: block;
+  }
+  .text {
+    font-size: 14px;
+    color: #7D8590;
+    margin-top: 8px;
+  }
+  .dot {
+    display: inline-block;
+    animation: blink 1.4s infinite;
+    color: #00D395;
+    font-size: 20px;
+  }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+</style>
+</head>
+<body>
+<div class="loader">
+  <img class="logo" src="icon-192.png" alt="PR">
+  <div style="color:#E6EDF3;font-size:16px;font-weight:600;margin-bottom:6px">市赚率分析器</div>
+  <div class="text">
+    <span class="dot">●</span>
+    <span class="dot">●</span>
+    <span class="dot">●</span>
+  </div>
+</div>
+<script>
+  // Register Service Worker from root scope
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error:', e));
+  }
+
+  // PWA install prompt
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  // Redirect to main app after brief load screen
+  setTimeout(() => {
+    window.location.replace('pr-analyzer-1.html');
+  }, 800);
+</script>
+</body>
+</html>
