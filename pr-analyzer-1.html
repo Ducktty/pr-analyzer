@@ -846,126 +846,105 @@ function setTickerAndSearch(t) {
   doTickerSearch();
 }
 
+// ── Yahoo Finance field mapping ──
+// summary:   trailingPE, priceToBook, returnOnEquity, dividendRate, trailingEps, forwardPE
+// financial: totalAssets, totalLiab, goodwill, inventory, netIncome, operatingIncome, totalCashFromOperatingActivities
+// key-stats: payoutRatio, priceToSalesTrailing12Months
+
+async function fetchYahooData(ticker) {
+  // Use Yahoo Finance v8 API (public, no key needed, CORS-friendly via proxy)
+  const PROXY = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+  const V10   = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/';
+  const modules = 'summaryDetail,defaultKeyStatistics,financialData,incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory';
+  const url = `${V10}${encodeURIComponent(ticker)}?modules=${modules}&corsDomain=finance.yahoo.com`;
+
+  const resp = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+  });
+  if (!resp.ok) throw new Error(`Yahoo Finance HTTP ${resp.status}`);
+  const json = await resp.json();
+  const result = json?.quoteSummary?.result?.[0];
+  if (!result) throw new Error('Yahoo Finance: no data returned');
+
+  const sd  = result.summaryDetail        || {};
+  const ks  = result.defaultKeyStatistics  || {};
+  const fd  = result.financialData         || {};
+  const is0 = result.incomeStatementHistory?.incomeStatementHistory?.[0] || {};
+  const bs0 = result.balanceSheetHistory?.balanceSheetHistory?.[0]       || {};
+  const cf0 = result.cashflowStatementHistory?.cashflowStatements?.[0]   || {};
+
+  // Helper: extract raw value
+  const v = (obj, key) => obj?.[key]?.raw ?? null;
+
+  // PR core fields
+  const pe        = v(sd,  'trailingPE')    ?? v(ks, 'forwardPE');
+  const pb        = v(ks,  'priceToBook');
+  const roeRaw    = v(fd,  'returnOnEquity');   // decimal e.g. 0.2729
+  const roe       = roeRaw !== null ? Math.round(roeRaw * 10000) / 100 : null; // → 27.29
+  const payoutRaw = v(ks,  'payoutRatio');       // decimal
+  const payout    = payoutRaw !== null ? Math.round(payoutRaw * 10000) / 100 : null;
+  const eps       = v(ks,  'trailingEps');
+  const divYield  = v(sd,  'dividendYield') !== null ? Math.round(v(sd,'dividendYield')*10000)/100 : null;
+  const name      = result.price?.longName || result.price?.shortName || ticker;
+
+  // Validity fields (raw numbers in reporting currency)
+  const totalAssets    = v(bs0, 'totalAssets');
+  const totalLiab      = v(bs0, 'totalLiab');
+  const goodwill       = v(bs0, 'goodWill');
+  const inventory      = v(bs0, 'inventory');
+  const netIncome      = v(is0, 'netIncome');
+  const operatingIncome= v(is0, 'operatingIncome') ?? v(fd, 'operatingIncome')?.raw;
+  const impairment     = null; // not separately exposed by Yahoo
+  const operatingCF    = v(cf0, 'totalCashFromOperatingActivities');
+
+  return {
+    ticker, name,
+    pe, pb, roe, payout, eps, dividend_yield: divYield,
+    platform: 'Yahoo Finance', confidence: 'high',
+    data_date: new Date().toISOString().slice(0,7),
+    // validity extras
+    _validity: { totalAssets, totalLiab, goodwill, inventory, netIncome, operatingIncome, impairment, operatingCF }
+  };
+}
+
 async function doTickerSearch() {
   const ticker = document.getElementById('ticker-search-input').value.trim().toUpperCase();
   if (!ticker) { showStatus('请先输入股票代码', 'warning'); return; }
 
   const btn = document.getElementById('ticker-search-btn');
-  btn.disabled = true;
-  btn.textContent = '搜索中…';
+  btn.disabled = true; btn.textContent = '搜索中…';
   document.getElementById('recognized-section').style.display = 'none';
   document.getElementById('result').style.display = 'none';
-  showStatus(`正在搜索 ${ticker} 最新财务数据…`);
-
-  const systemPrompt = `你是专业股票财务数据分析师。用户给你一个股票代码，你必须：
-1. 用 web_search 搜索该股票最新的 PE、PB、ROE、股利支付率（搜索词如 "${ticker} PE PB ROE payout ratio"）
-2. 从结果中提取这 4 项数据
-3. 只输出一个 JSON，不要有任何其他文字
-
-JSON 格式：
-{"ticker":"代码","name":"公司名","pe":数字或null,"pb":数字或null,"roe":数字或null,"payout":数字或null,"platform":"数据来源","confidence":"high/medium/low","data_date":"数据日期"}
-
-规则：ROE、股利支付率填纯数字（27.3 不是 27.3%）。找不到填 null。`;
+  showStatus(`正在从 Yahoo Finance 获取 ${ticker} 数据…`, 'loading');
 
   try {
-    const apiKey = getApiKey();
-    if (!apiKey) { showStatus('请先在顶部填入 Anthropic API Key', 'warning'); btn.disabled=false; btn.textContent='搜索'; return; }
+    const data = await fetchYahooData(ticker);
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    };
+    recognizedData = data;
+    lastDataSource = 'Yahoo Finance';
 
-    // ── Round 1: Initial request with web_search tool ──
-    showStatus(`正在搜索 ${ticker}…`, 'loading');
-    let messages = [{ role:'user', content:`请搜索 ${ticker} 的 PE、PB、ROE、股利支付率，输出 JSON。` }];
-
-    let resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers,
-      body: JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1500,
-        system: systemPrompt,
-        tools:[{ type:'web_search_20250305', name:'web_search' }],
-        messages
-      })
-    });
-
-    if (!resp.ok) {
-      const errData = await resp.json().catch(()=>({}));
-      const errMsg = errData.error?.message || `HTTP ${resp.status}`;
-      if (resp.status === 401) throw new Error('API Key 无效，请重新检查');
-      throw new Error(errMsg);
+    // Pre-fill validity data from Yahoo
+    if (data._validity) {
+      const vd = data._validity;
+      const fmt = n => n !== null ? (Math.abs(n) >= 1e9 ? (n/1e9).toFixed(2)+'B' : (Math.abs(n)>=1e6?(n/1e6).toFixed(1)+'M':String(n))) : '';
+      if (vd.totalAssets)     { validityData.total_assets  = fmt(vd.totalAssets);  validityData.total_assets2 = fmt(vd.totalAssets); }
+      if (vd.totalLiab)       { validityData.total_liabilities = fmt(vd.totalLiab); }
+      if (vd.goodwill)        { validityData.goodwill      = fmt(vd.goodwill); }
+      if (vd.inventory)       { validityData.inventories   = fmt(vd.inventory); }
+      if (vd.netIncome)       { validityData.net_profit = validityData.net_profit2 = validityData.net_profit3 = fmt(vd.netIncome); }
+      if (vd.operatingIncome) { validityData.core_profit   = fmt(vd.operatingIncome); }
+      if (vd.operatingCF)     { validityData.operating_cf  = fmt(vd.operatingCF); }
     }
 
-    let data = await resp.json();
-
-    // ── Tool-use loop: keep going until stop_reason is "end_turn" ──
-    let loopCount = 0;
-    while (data.stop_reason === 'tool_use' && loopCount < 5) {
-      loopCount++;
-      showStatus(`AI 正在搜索网络数据… (第${loopCount}次)`, 'loading');
-
-      // Collect all tool_use blocks
-      const toolUseBlocks = data.content.filter(b => b.type === 'tool_use');
-
-      // Build tool_result blocks (web_search results come back automatically)
-      const toolResults = toolUseBlocks.map(tu => ({
-        type: 'tool_result',
-        tool_use_id: tu.id,
-        content: tu.type === 'web_search_20250305' ? [] : []
-      }));
-
-      // Add assistant turn + user turn with tool results
-      messages = [
-        ...messages,
-        { role: 'assistant', content: data.content },
-        { role: 'user', content: toolResults }
-      ];
-
-      resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST', headers,
-        body: JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:1500,
-          system: systemPrompt,
-          tools:[{ type:'web_search_20250305', name:'web_search' }],
-          messages
-        })
-      });
-
-      if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message||`HTTP ${resp.status}`); }
-      data = await resp.json();
-    }
-
-    // ── Extract final JSON from last text response ──
-    const fullText = data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
-    const clean = fullText.replace(/```json|```/g,'').trim();
-    const jsonMatch = clean.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('未能从搜索结果中提取数据');
-
-    recognizedData = JSON.parse(jsonMatch[0]);
-    lastDataSource = '网络搜索';
-    const src = recognizedData.platform || '网络';
-    const date = recognizedData.data_date ? ' · ' + recognizedData.data_date : '';
-    showStatus(`✓ ${recognizedData.name||ticker} 数据获取成功 · 来源：${src}${date}`, 'success');
+    showStatus(`✓ ${data.name} · Yahoo Finance · ${data.data_date}`, 'success');
     setTimeout(() => { document.getElementById('smart-status').style.display='none'; }, 4000);
     renderRecognizedFields();
 
   } catch(err) {
-    const msg = err.message || '';
-    if (msg.includes('API Key') || msg.includes('401')) {
-      showStatus('API Key 无效，请重新检查后保存', 'error');
-    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-      showStatus('网络连接失败，请检查网络后重试', 'error');
-    } else {
-      showStatus(`搜索失败：${msg || '无法获取 '+ticker+' 数据'}`, 'error');
-    }
+    // Yahoo failed — fallback message, no AI web_search (avoids rate limit)
+    showStatus(`Yahoo Finance 获取失败（${err.message}）。请尝试上传截图或 PDF`, 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = '搜索';
+    btn.disabled = false; btn.textContent = '搜索';
   }
 }
 
@@ -1739,9 +1718,69 @@ async function doValiditySearch() {
   if (!ticker) return;
   const btn = document.getElementById('v-search-btn');
   btn.disabled = true; btn.textContent = '搜索中…';
-  showVStatus('v-search-status', `正在搜索 ${ticker} 财务数据…`, 'loading');
-  await fetchValidityData({ type:'search', ticker });
-  btn.disabled = false; btn.textContent = '搜索';
+  showVStatus('v-search-status', `正在从 Yahoo Finance 获取 ${ticker} 财务数据…`, 'loading');
+
+  try {
+    const data = await fetchYahooData(ticker);
+    const vd = data._validity || {};
+    const fmt = n => n !== null && n !== undefined
+      ? (Math.abs(n) >= 1e9 ? (n/1e9).toFixed(2)+'B' : (Math.abs(n)>=1e6?(n/1e6).toFixed(1)+'M':String(n)))
+      : '';
+
+    // Map to validityData keys
+    const mapping = {
+      total_assets:       fmt(vd.totalAssets),
+      total_assets2:      fmt(vd.totalAssets),
+      total_liabilities:  fmt(vd.totalLiab),
+      goodwill:           fmt(vd.goodwill),
+      inventories:        fmt(vd.inventory),
+      net_profit:         fmt(vd.netIncome),
+      net_profit2:        fmt(vd.netIncome),
+      net_profit3:        fmt(vd.netIncome),
+      core_profit:        fmt(vd.operatingIncome),
+      operating_cf:       fmt(vd.operatingCF),
+      industry:           validityData.industry || '',
+    };
+
+    let filled = 0;
+    Object.entries(mapping).forEach(([k, val]) => {
+      if (val) { validityData[k] = val; filled++; }
+    });
+
+    // Recompute all flags
+    RED_FLAGS.forEach(flag => Object.assign(validityData, flag.compute(validityData)));
+
+    // Refresh input DOM values
+    Object.entries(validityData).forEach(([k, val]) => {
+      const el = document.getElementById('vinput-' + k);
+      if (el && val) el.value = val;
+    });
+
+    // Update each flag badge
+    RED_FLAGS.forEach(flag => {
+      const status = flag.check(validityData);
+      const resultLine = flag.formatResult(validityData);
+      const badgeMap = { pass:'✓ Pass', fail:'🔴 Red Flag', unknown:'— Pending', warn:'⚠ Note' };
+      const dotEl    = document.getElementById('vdot-'   + flag.id);
+      const badgeEl  = document.getElementById('vbadge-' + flag.id);
+      const resultEl = document.getElementById('vresult-'+ flag.id);
+      if (dotEl)    dotEl.className   = 'v-status-dot ' + status;
+      if (badgeEl)  { badgeEl.className = 'v-item-badge ' + status; badgeEl.textContent = badgeMap[status]||'—'; }
+      if (resultEl) {
+        if (resultLine) { resultEl.className = 'v-result-line ' + status; resultEl.textContent = resultLine; }
+        else { resultEl.className = 'v-unknown-note'; resultEl.textContent = 'Enter data above to calculate'; }
+      }
+    });
+    updateValidityOverall();
+
+    const uniqueFilled = new Set(['total_assets','total_liabilities','goodwill','inventories','net_profit','core_profit','operating_cf'].filter(k=>validityData[k])).size;
+    showVStatus('v-search-status', `✓ ${data.name} · Yahoo Finance · ${uniqueFilled}/7 项财务数据已填入`, 'success');
+
+  } catch(err) {
+    showVStatus('v-search-status', `Yahoo Finance 获取失败：${err.message}`, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '搜索';
+  }
 }
 
 function showVStatus(elId, msg, type) {
