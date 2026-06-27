@@ -1214,33 +1214,7 @@ async function runAIReport(pr, inputs, grade) {
   const payoutStr = (inputs.payout===null||inputs.payout===undefined)?'50%（默认）':inputs.payout+'%';
   const extraLines = Object.entries(inputs.extra||{}).filter(([k,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' · ');
 
-  const prompt = `你是一位批判性价值投资分析师，作风类似查理·芒格——直接、不粉饰、会指出陷阱。
-请基于以下数据用中文写一份深度分析报告（总共500字以内）。
-
-股票: ${ticker}
-数据来源: ${inputs.dataSource||'手动'}${inputs.platform?' ('+inputs.platform+')':''}
-模式: ${inputs.mode==='pe'?'PE模式':'PB模式'}
-${inputs.mode==='pe'?`PE: ${inputs.pe}, ROE: ${inputs.roe}%`:`PB: ${inputs.pb}, 平均ROE: ${inputs.roe}%`}
-股利支付率: ${payoutStr}, 修正系数: ${inputs.correction.toFixed(2)}
-市赚率PR: ${pr.toFixed(4)}, 估值等级: ${grade.text}
-${extraLines?'其他数据: '+extraLines:''}
-
-请按五个部分撰写，每部分以【标题】开头，不要使用markdown符号：
-
-【估值现状】
-用两句话说明当前PR值意味着什么，投资者为每一块钱盈利能力付出了多少代价。
-
-【驱动因素分析】
-ROE的质量来源是什么？是真实竞争优势还是杠杆推高？股利支付率反映了什么管理层态度？
-
-【批判性审视】
-这个估值有什么可能被高估或低估的理由？数据有哪些局限性？什么情况下这个PR会失效？
-
-【风险情景】
-如果ROE下滑20%，PR会变成多少？列出两个最可能让这个投资逻辑崩溃的风险。
-
-【一句话结论】
-给出一个直接的判断，不要模糊。`;
+  const prompt = `你是一位专业价值投资分析师，请基于以下数据用中文写一份结构化分析报告（总共300字以内）。
 
 股票: ${ticker}
 数据来源: ${inputs.dataSource||'手动'}${inputs.platform?' ('+inputs.platform+')':''}
